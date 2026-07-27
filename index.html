@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Skull King - Comptage des points</title>
+  <meta name="theme-color" content="#0b2545" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header id="app-header">
+    <button id="btn-header-back" class="header-btn hidden" aria-label="Retour">←</button>
+    <h1 id="app-title">🏴‍☠️ Skull King</h1>
+    <button id="btn-header-home" class="header-btn hidden" aria-label="Accueil">⌂</button>
+  </header>
+
+  <main id="app">
+    <!-- Accueil -->
+    <section class="screen" id="screen-home">
+      <p id="home-status" class="status-msg"></p>
+      <div class="button-stack">
+        <button id="btn-resume-game" class="btn btn-primary hidden">Reprendre la partie en cours</button>
+        <button id="btn-new-game" class="btn btn-primary">Nouvelle partie</button>
+        <button id="btn-history" class="btn btn-secondary">Historique des parties</button>
+      </div>
+    </section>
+
+    <!-- Configuration (joueurs + règles) -->
+    <section class="screen" id="screen-setup">
+      <h2>Nouvelle partie</h2>
+
+      <fieldset>
+        <legend>Joueurs</legend>
+        <div id="players-list"></div>
+        <button id="btn-add-player" class="btn btn-small" type="button">+ Ajouter un joueur</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Nombre de manches</legend>
+        <input id="input-num-rounds" type="number" min="1" max="10" value="10" />
+      </fieldset>
+
+      <details id="rules-config">
+        <summary>Règles de score (bonus) — appuyer pour configurer</summary>
+
+        <fieldset>
+          <legend>Score de base</legend>
+          <label>Annonce 0 réussie (points × n° manche)
+            <input id="rule-bidZeroSuccess" type="number" />
+          </label>
+          <label>Annonce 0 ratée (malus × n° manche)
+            <input id="rule-bidZeroFail" type="number" />
+          </label>
+          <label>Annonce respectée (points × plis)
+            <input id="rule-bidSuccessPerTrick" type="number" />
+          </label>
+          <label>Annonce ratée (malus × écart)
+            <input id="rule-bidFailPerTrickDiff" type="number" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Bonus cartes spéciales</legend>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-skullKingCapturesPirate" type="checkbox" />
+              Skull King capture un Pirate
+            </label>
+            <input id="value-skullKingCapturesPirate" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-pirateCapturesMermaid" type="checkbox" />
+              Pirate capture une Sirène
+            </label>
+            <input id="value-pirateCapturesMermaid" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-mermaidCapturesSkullKing" type="checkbox" />
+              Sirène capture le Skull King
+            </label>
+            <input id="value-mermaidCapturesSkullKing" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-bonus14Normal" type="checkbox" />
+              Carte 14 bonus (couleur normale)
+            </label>
+            <input id="value-bonus14Normal" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-bonus14Black" type="checkbox" />
+              Carte 14 bonus noire (Jolly Roger)
+            </label>
+            <input id="value-bonus14Black" type="number" class="rule-value" />
+          </div>
+        </fieldset>
+
+        <button id="btn-reset-rules" class="btn btn-small" type="button">Réinitialiser aux valeurs officielles</button>
+      </details>
+
+      <p id="setup-errors" class="error-msg"></p>
+      <button id="btn-start-game" class="btn btn-primary">Commencer la partie</button>
+    </section>
+
+    <!-- Saisie d'une manche -->
+    <section class="screen" id="screen-round">
+      <h2 id="round-title">Manche 1 / 10</h2>
+      <div id="round-entries"></div>
+      <p id="round-errors" class="error-msg"></p>
+      <button id="btn-validate-round" class="btn btn-primary">Valider la manche</button>
+    </section>
+
+    <!-- Tableau des scores -->
+    <section class="screen" id="screen-scoreboard">
+      <h2 id="scoreboard-title">Scores</h2>
+      <div id="scoreboard-table-container"></div>
+      <button id="btn-next-round" class="btn btn-primary">Manche suivante</button>
+    </section>
+
+    <!-- Fin de partie -->
+    <section class="screen" id="screen-finished">
+      <h2>Partie terminée</h2>
+      <div id="finished-ranking"></div>
+      <div class="button-stack">
+        <button id="btn-finished-new-game" class="btn btn-primary">Nouvelle partie</button>
+        <button id="btn-finished-home" class="btn btn-secondary">Accueil</button>
+      </div>
+    </section>
+
+    <!-- Historique -->
+    <section class="screen" id="screen-history">
+      <h2>Historique des parties</h2>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- Détail d'une partie de l'historique -->
+    <section class="screen" id="screen-history-detail">
+      <h2>Détail de la partie</h2>
+      <div id="history-detail-content"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

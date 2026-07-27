@@ -1,0 +1,364 @@
+:root {
+  --color-bg: #0b2545;
+  --color-bg-alt: #133a63;
+  --color-surface: #ffffff;
+  --color-text: #10182b;
+  --color-text-light: #f5f0e6;
+  --color-accent: #d4af37;
+  --color-accent-dark: #b8952e;
+  --color-danger: #b3261e;
+  --color-success: #1e6b3a;
+  --radius: 12px;
+  --gap: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-light);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  padding-top: calc(0.75rem + env(safe-area-inset-top));
+  background: var(--color-bg-alt);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+#app-title {
+  font-size: 1.1rem;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.header-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: 1.4rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+  animation: fadein 0.15s ease-in;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+h2 {
+  margin-top: 0;
+  color: var(--color-accent);
+}
+
+fieldset {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+}
+
+legend {
+  color: var(--color-accent);
+  padding: 0 0.4rem;
+  font-weight: 600;
+}
+
+details#rules-config {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+details#rules-config summary {
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+}
+
+input[type="text"],
+input[type="number"] {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.6rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rule-row .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  flex: 1;
+}
+
+.rule-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.rule-value {
+  width: 70px !important;
+  flex-shrink: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-bottom: 0.6rem;
+  min-height: 48px;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #1a1200;
+}
+
+.btn-primary:active {
+  background: var(--color-accent-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-light);
+  border: 1px solid var(--color-accent);
+}
+
+.btn-small {
+  width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background: var(--color-bg-alt);
+  color: var(--color-text-light);
+  border: 1px solid var(--color-accent);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+.button-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.status-msg {
+  text-align: center;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.error-msg {
+  color: #ffb4a9;
+  font-size: 0.9rem;
+  white-space: pre-line;
+}
+
+/* Joueurs (setup) */
+.player-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.player-row input {
+  flex: 1;
+  margin-top: 0;
+}
+
+.player-row .btn-remove-player {
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Saisie de manche */
+.player-round-card {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.player-round-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text-light);
+}
+
+.round-inputs-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.round-inputs-row > div {
+  flex: 1;
+}
+
+.round-inputs-row label {
+  font-size: 0.85rem;
+}
+
+.bonus-toggle-list {
+  margin-top: 0.5rem;
+  border-top: 1px dashed rgba(212, 175, 55, 0.3);
+  padding-top: 0.5rem;
+}
+
+.bonus-toggle-list .rule-row {
+  font-size: 0.85rem;
+}
+
+.bonus-toggle-list .rule-value {
+  width: 60px !important;
+}
+
+/* Tableau des scores */
+table.scoreboard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+table.scoreboard th,
+table.scoreboard td {
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.4rem;
+  text-align: center;
+}
+
+table.scoreboard th {
+  background: var(--color-bg-alt);
+  color: var(--color-accent);
+}
+
+table.scoreboard td.round-label {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-align: left;
+}
+
+table.scoreboard tr.total-row td {
+  font-weight: 700;
+  background: rgba(212, 175, 55, 0.15);
+}
+
+/* Classement final */
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.ranking-item.rank-1 {
+  border: 2px solid var(--color-accent);
+  font-weight: 700;
+}
+
+.ranking-item .rank-position {
+  color: var(--color-accent);
+  margin-right: 0.5rem;
+}
+
+/* Historique */
+.history-item {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.history-item:active {
+  border-color: var(--color-accent);
+}
+
+.history-item .history-date {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
