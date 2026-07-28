@@ -212,6 +212,29 @@ document.getElementById("btn-rules").addEventListener("click", () => showScreen(
 
 // ---------- Saisie de manche ----------
 
+function renderStepper(fieldId, max, extraAttrs = "") {
+  return `
+    <div class="stepper" data-max="${max}">
+      <button type="button" class="stepper-btn stepper-minus" aria-label="Diminuer">−</button>
+      <input type="number" id="${fieldId}" class="stepper-value" readonly inputmode="none" min="0" max="${max}"
+        value="0" ${extraAttrs} />
+      <button type="button" class="stepper-btn stepper-plus" aria-label="Augmenter">+</button>
+    </div>`;
+}
+
+function handleStepperClick(e) {
+  const btn = e.target.closest(".stepper-btn");
+  if (!btn) return;
+  const stepper = btn.closest(".stepper");
+  const input = stepper.querySelector(".stepper-value");
+  const max = parseInt(stepper.dataset.max, 10);
+  const value = parseInt(input.value, 10) || 0;
+  input.value = btn.classList.contains("stepper-plus") ? Math.min(max, value + 1) : Math.max(0, value - 1);
+}
+
+document.getElementById("round-entries").addEventListener("click", handleStepperClick);
+document.getElementById("round-voided-tricks-container").addEventListener("click", handleStepperClick);
+
 function renderBonusField(key, playerId) {
   const max = BONUS_MAX[key];
   const label = BONUS_LABELS[key];
@@ -226,8 +249,7 @@ function renderBonusField(key, playerId) {
   return `
     <div class="rule-row">
       <label class="checkbox-label" for="${fieldId}">${label} (0-${max})</label>
-      <input type="number" id="${fieldId}" class="rule-value" min="0" max="${max}" value="0"
-        data-bonus-key="${key}" data-player="${playerId}" />
+      ${renderStepper(fieldId, max, `data-bonus-key="${key}" data-player="${playerId}"`)}
     </div>`;
 }
 
@@ -240,7 +262,7 @@ function renderVoidedTricksField(roundNumber) {
   container.innerHTML = `
     <div class="rule-row">
       <label class="checkbox-label" for="voided-tricks">Plis annulés (Kraken / Baleine blanche, 0-${roundNumber})</label>
-      <input type="number" inputmode="numeric" id="voided-tricks" class="rule-value" min="0" max="${roundNumber}" value="0" />
+      ${renderStepper("voided-tricks", roundNumber)}
     </div>`;
 }
 
@@ -261,11 +283,11 @@ function renderRoundScreen() {
           <div class="round-inputs-row">
             <div>
               <label for="bid-${p.id}">Annonce</label>
-              <input type="number" inputmode="numeric" id="bid-${p.id}" min="0" max="${roundNumber}" value="0" />
+              ${renderStepper(`bid-${p.id}`, roundNumber)}
             </div>
             <div>
               <label for="tricks-${p.id}">Plis remportés</label>
-              <input type="number" inputmode="numeric" id="tricks-${p.id}" min="0" max="${roundNumber}" value="0" />
+              ${renderStepper(`tricks-${p.id}`, roundNumber)}
             </div>
           </div>
           ${bonusHtml ? `<div class="bonus-toggle-list">${bonusHtml}</div>` : ""}
