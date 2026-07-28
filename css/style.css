@@ -311,11 +311,12 @@ input[type="number"] {
 
 .round-inputs-row {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
 }
 
 .round-inputs-row > div {
-  flex: 1;
+  flex: 1 1 130px;
 }
 
 .round-inputs-row label {
