@@ -153,6 +153,51 @@ input[type="number"] {
   flex-shrink: 0;
 }
 
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.stepper-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-bg-alt);
+  color: var(--color-text-light);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.stepper-btn:active {
+  background: var(--color-accent);
+  color: #1a1200;
+}
+
+.stepper-value {
+  width: 36px !important;
+  margin-top: 0 !important;
+  padding: 0.4rem 0 !important;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stepper-value::-webkit-outer-spin-button,
+.stepper-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper-value {
+  -moz-appearance: textfield;
+}
+
 .rule-value {
   width: 70px !important;
   flex-shrink: 0;
