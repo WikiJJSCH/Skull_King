@@ -175,6 +175,7 @@ function fillRuleInputs(rules) {
   document.getElementById("rule-bidSuccessPerTrick").value = rules.bidSuccessPerTrick;
   document.getElementById("rule-bidFailPerTrickDiff").value = rules.bidFailPerTrickDiff;
   document.getElementById("enable-voided-tricks").checked = !!rules.enableVoidedTricks;
+  document.getElementById("enable-simplified-bonus-mode").checked = !!rules.simplifiedBonusMode;
   for (const key of BONUS_KEYS) {
     document.getElementById("enable-" + key).checked = !!rules.enabled[key];
     document.getElementById("value-" + key).value = rules[key];
@@ -188,6 +189,7 @@ function readRuleInputsFromForm() {
     bidSuccessPerTrick: parseInt(document.getElementById("rule-bidSuccessPerTrick").value, 10) || 0,
     bidFailPerTrickDiff: parseInt(document.getElementById("rule-bidFailPerTrickDiff").value, 10) || 0,
     enableVoidedTricks: document.getElementById("enable-voided-tricks").checked,
+    simplifiedBonusMode: document.getElementById("enable-simplified-bonus-mode").checked,
     enabled: {},
   };
   for (const key of BONUS_KEYS) {
@@ -261,11 +263,13 @@ document.getElementById("btn-rules").addEventListener("click", () => showScreen(
 
 // ---------- Saisie de manche ----------
 
-function renderStepper(fieldId, max, extraAttrs = "", initialValue = 0) {
+function renderStepper(fieldId, max, extraAttrs = "", initialValue = 0, { min = 0, step = 1 } = {}) {
+  const minAttr = min != null ? `min="${min}"` : "";
+  const maxAttr = max != null ? `max="${max}"` : "";
   return `
-    <div class="stepper" data-max="${max}">
+    <div class="stepper" data-max="${max ?? ""}" data-min="${min ?? ""}" data-step="${step}">
       <button type="button" class="stepper-btn stepper-minus" aria-label="Diminuer">−</button>
-      <input type="number" id="${fieldId}" class="stepper-value" readonly inputmode="none" min="0" max="${max}"
+      <input type="number" id="${fieldId}" class="stepper-value" readonly inputmode="none" ${minAttr} ${maxAttr}
         value="${initialValue}" ${extraAttrs} />
       <button type="button" class="stepper-btn stepper-plus" aria-label="Augmenter">+</button>
     </div>`;
@@ -276,9 +280,14 @@ function handleStepperClick(e) {
   if (!btn) return;
   const stepper = btn.closest(".stepper");
   const input = stepper.querySelector(".stepper-value");
-  const max = parseInt(stepper.dataset.max, 10);
+  const max = stepper.dataset.max !== "" ? parseInt(stepper.dataset.max, 10) : null;
+  const min = stepper.dataset.min !== "" ? parseInt(stepper.dataset.min, 10) : null;
+  const step = parseInt(stepper.dataset.step, 10) || 1;
   const value = parseInt(input.value, 10) || 0;
-  input.value = btn.classList.contains("stepper-plus") ? Math.min(max, value + 1) : Math.max(0, value - 1);
+  let next = btn.classList.contains("stepper-plus") ? value + step : value - step;
+  if (max != null) next = Math.min(max, next);
+  if (min != null) next = Math.max(min, next);
+  input.value = next;
 }
 
 document.getElementById("round-entries").addEventListener("click", handleStepperClick);
@@ -300,6 +309,15 @@ function renderBonusField(key, playerId, initialValue = 0) {
     <div class="rule-row">
       <label class="checkbox-label" for="${fieldId}">${label} (0-${max})</label>
       ${renderStepper(fieldId, max, `data-bonus-key="${key}" data-player="${playerId}"`, initialValue)}
+    </div>`;
+}
+
+function renderSimpleBonusField(playerId, initialValue = 0) {
+  const fieldId = `simple-bonus-${playerId}`;
+  return `
+    <div>
+      <label for="${fieldId}">Bonus</label>
+      ${renderStepper(fieldId, null, `data-player="${playerId}"`, initialValue, { min: null, step: 5 })}
     </div>`;
 }
 
@@ -332,14 +350,24 @@ function renderRoundScreen(editIndex = null) {
   document.getElementById("round-errors").textContent = "";
   renderVoidedTricksField(roundNumber, existing ? existing.voidedTricks || 0 : 0);
 
+  const simplifiedBonus = !!currentGame.rules.simplifiedBonusMode;
   const enabledBonusKeys = BONUS_KEYS.filter((k) => currentGame.rules.enabled[k]);
 
   const html = currentGame.players
     .map((p) => {
       const entry = existing ? existing.entries[p.id] : null;
-      const bonusHtml = enabledBonusKeys
-        .map((k) => renderBonusField(k, p.id, entry && entry.bonuses ? entry.bonuses[k] || 0 : 0))
-        .join("");
+      let detailedBonusHtml = "";
+      let simpleBonusColumnHtml = "";
+      if (simplifiedBonus) {
+        simpleBonusColumnHtml = renderSimpleBonusField(p.id, entry ? entry.simpleBonus || 0 : 0);
+      } else {
+        const bonusHtml = enabledBonusKeys
+          .map((k) => renderBonusField(k, p.id, entry && entry.bonuses ? entry.bonuses[k] || 0 : 0))
+          .join("");
+        detailedBonusHtml = bonusHtml
+          ? `<details class="bonus-accordion"><summary>Bonus</summary><div class="bonus-toggle-list">${bonusHtml}</div></details>`
+          : "";
+      }
       return `
         <div class="player-round-card">
           <h3>${escapeHtml(p.name)}</h3>
@@ -352,8 +380,9 @@ function renderRoundScreen(editIndex = null) {
               <label for="tricks-${p.id}">Plis remportés</label>
               ${renderStepper(`tricks-${p.id}`, roundNumber, "", entry ? entry.tricksWon || 0 : 0)}
             </div>
+            ${simpleBonusColumnHtml}
           </div>
-          ${bonusHtml ? `<details class="bonus-accordion"><summary>Bonus</summary><div class="bonus-toggle-list">${bonusHtml}</div></details>` : ""}
+          ${detailedBonusHtml}
         </div>`;
     })
     .join("");
@@ -375,12 +404,17 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     const bid = parseInt(document.getElementById(`bid-${p.id}`).value, 10) || 0;
     const tricksWon = parseInt(document.getElementById(`tricks-${p.id}`).value, 10) || 0;
     const bonuses = emptyBonuses();
-    for (const key of BONUS_KEYS) {
-      if (!currentGame.rules.enabled[key]) continue;
-      const el = document.getElementById(`bonus-${key}-${p.id}`);
-      bonuses[key] = el.type === "checkbox" ? (el.checked ? 1 : 0) : parseInt(el.value, 10) || 0;
+    let simpleBonus = 0;
+    if (currentGame.rules.simplifiedBonusMode) {
+      simpleBonus = parseInt(document.getElementById(`simple-bonus-${p.id}`).value, 10) || 0;
+    } else {
+      for (const key of BONUS_KEYS) {
+        if (!currentGame.rules.enabled[key]) continue;
+        const el = document.getElementById(`bonus-${key}-${p.id}`);
+        bonuses[key] = el.type === "checkbox" ? (el.checked ? 1 : 0) : parseInt(el.value, 10) || 0;
+      }
     }
-    entries[p.id] = { bid, tricksWon, bonuses };
+    entries[p.id] = { bid, tricksWon, bonuses, simpleBonus };
   }
 
   const voidedTricks = currentGame.rules.enableVoidedTricks
@@ -400,7 +434,7 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
 
   for (const p of currentGame.players) {
     const e = entries[p.id];
-    e.score = computeRoundScore(roundNumber, e.bid, e.tricksWon, e.bonuses, currentGame.rules);
+    e.score = computeRoundScore(roundNumber, e.bid, e.tricksWon, e.bonuses, currentGame.rules, e.simpleBonus);
   }
 
   if (isEdit) {

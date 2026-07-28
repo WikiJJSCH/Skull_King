@@ -32,6 +32,7 @@ export const DEFAULT_RULES = {
   davyJonesLocker: 20,      // extension : par Léviathan détruit par le Casier de Davy Jones (max 3)
   secondCaptured: 30,       // extension : Second capturé par le Skull King ou une Sirène (max 1)
   enableVoidedTricks: true, // règle avancée : le Kraken / la Baleine blanche peuvent annuler un pli
+  simplifiedBonusMode: false, // mode de saisie : une seule ligne "Bonus" par joueur, ajustée par pas de 5, au lieu du détail par type
   enabled: {
     skullKingCapturesPirate: true,
     pirateCapturesMermaid: true,
@@ -83,11 +84,12 @@ export function emptyBonuses() {
  * @param {number} roundNumber - numéro de la manche (1..N), = nb de plis joués ce tour
  * @param {number} bid - annonce du joueur (0..roundNumber)
  * @param {number} tricksWon - plis réellement remportés (0..roundNumber)
- * @param {object} bonuses - compteurs de bonus (voir emptyBonuses())
+ * @param {object} bonuses - compteurs de bonus (voir emptyBonuses()), ignoré en mode simplifié
  * @param {object} rules - jeu de règles (voir DEFAULT_RULES)
+ * @param {number} simpleBonus - ajustement de score en mode simplifié (rules.simplifiedBonusMode)
  * @returns {number} score total de la manche pour ce joueur
  */
-export function computeRoundScore(roundNumber, bid, tricksWon, bonuses, rules) {
+export function computeRoundScore(roundNumber, bid, tricksWon, bonuses, rules, simpleBonus = 0) {
   let base;
   if (bid === 0) {
     base = tricksWon === 0
@@ -100,14 +102,19 @@ export function computeRoundScore(roundNumber, bid, tricksWon, bonuses, rules) {
     base = -Math.abs(rules.bidFailPerTrickDiff) * diff;
   }
 
-  const bidSuccess = bid === 0 ? tricksWon === 0 : tricksWon === bid;
-  const b = bonuses || emptyBonuses();
-  const enabled = rules.enabled || {};
-  let bonusTotal = 0;
-  for (const key of BONUS_KEYS) {
-    if (!enabled[key]) continue;
-    if (BID_SUCCESS_ONLY_KEYS.has(key) && !bidSuccess) continue;
-    bonusTotal += (b[key] || 0) * rules[key];
+  let bonusTotal;
+  if (rules.simplifiedBonusMode) {
+    bonusTotal = simpleBonus || 0;
+  } else {
+    const bidSuccess = bid === 0 ? tricksWon === 0 : tricksWon === bid;
+    const b = bonuses || emptyBonuses();
+    const enabled = rules.enabled || {};
+    bonusTotal = 0;
+    for (const key of BONUS_KEYS) {
+      if (!enabled[key]) continue;
+      if (BID_SUCCESS_ONLY_KEYS.has(key) && !bidSuccess) continue;
+      bonusTotal += (b[key] || 0) * rules[key];
+    }
   }
 
   return base + bonusTotal;
