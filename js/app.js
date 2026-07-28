@@ -8,7 +8,7 @@ import {
   computeTotals,
   validateRoundEntries,
 } from "./scoring.js";
-import { createGame, updateGame, getGame, getInProgressGame, listFinishedGames, deleteGame } from "./db.js";
+import { createGame, updateGame, getGame, listInProgressGames, listFinishedGames, deleteGame } from "./db.js";
 
 const SCREEN_NAV = {
   home: {},
@@ -22,7 +22,6 @@ const SCREEN_NAV = {
 };
 
 let currentGame = null;
-let pendingResumeGame = null;
 let lastPlayerNames = ["", ""];
 let editingRoundIndex = null;
 
@@ -58,20 +57,35 @@ async function navigateTo(name) {
 
 // ---------- Accueil ----------
 
+function renderInProgressItem(g) {
+  const roundNumber = Math.min(g.rounds.length + 1, g.numRounds);
+  const names = g.players.map((p) => escapeHtml(p.name)).join(", ");
+  return `
+    <div class="history-item in-progress-item" data-game-id="${g.id}">
+      <div class="history-item-main">
+        <div>${names}</div>
+        <div class="history-date">Manche ${roundNumber} / ${g.numRounds}</div>
+      </div>
+      <button type="button" class="btn-delete-history" aria-label="Abandonner la partie">🗑</button>
+      <div class="history-confirm-delete hidden">
+        <span>Abandonner définitivement cette partie ?</span>
+        <button type="button" class="btn-small btn-cancel-delete">Annuler</button>
+        <button type="button" class="btn-small btn-danger btn-confirm-delete">Abandonner</button>
+      </div>
+    </div>`;
+}
+
 async function renderHome() {
   const statusEl = document.getElementById("home-status");
-  const resumeBtn = document.getElementById("btn-resume-game");
-  const abandonBtn = document.getElementById("btn-abandon-game");
+  const listEl = document.getElementById("in-progress-list");
   statusEl.textContent = "";
-  resumeBtn.classList.add("hidden");
-  abandonBtn.classList.add("hidden");
-  document.getElementById("abandon-confirm").classList.add("hidden");
-  pendingResumeGame = null;
+  listEl.innerHTML = "";
   try {
-    pendingResumeGame = await getInProgressGame();
-    if (pendingResumeGame) {
-      resumeBtn.classList.remove("hidden");
-      abandonBtn.classList.remove("hidden");
+    const games = await listInProgressGames();
+    if (games.length > 0) {
+      listEl.innerHTML =
+        '<p class="table-hint">Parties en cours (touche pour reprendre) :</p>' +
+        games.map(renderInProgressItem).join("");
     }
   } catch (err) {
     console.error(err);
@@ -80,28 +94,40 @@ async function renderHome() {
   }
 }
 
-document.getElementById("btn-abandon-game").addEventListener("click", () => {
-  document.getElementById("btn-abandon-game").classList.add("hidden");
-  document.getElementById("abandon-confirm").classList.remove("hidden");
-});
+document.getElementById("in-progress-list").addEventListener("click", async (e) => {
+  const item = e.target.closest(".in-progress-item");
+  if (!item) return;
+  const gameId = item.dataset.gameId;
 
-document.getElementById("btn-cancel-abandon").addEventListener("click", () => {
-  document.getElementById("abandon-confirm").classList.add("hidden");
-  document.getElementById("btn-abandon-game").classList.remove("hidden");
-});
+  if (e.target.closest(".btn-delete-history")) {
+    item.querySelector(".history-confirm-delete").classList.remove("hidden");
+    e.target.closest(".btn-delete-history").classList.add("hidden");
+    return;
+  }
+  if (e.target.closest(".btn-cancel-delete")) {
+    item.querySelector(".history-confirm-delete").classList.add("hidden");
+    item.querySelector(".btn-delete-history").classList.remove("hidden");
+    return;
+  }
+  if (e.target.closest(".btn-confirm-delete")) {
+    try {
+      await deleteGame(gameId);
+      item.remove();
+    } catch (err) {
+      console.error(err);
+      item.querySelector(".history-confirm-delete").classList.add("hidden");
+      item.querySelector(".btn-delete-history").classList.remove("hidden");
+    }
+    return;
+  }
+  if (e.target.closest("button")) return;
 
-document.getElementById("btn-confirm-abandon").addEventListener("click", async () => {
-  if (!pendingResumeGame) return;
   try {
-    await deleteGame(pendingResumeGame.id);
-    pendingResumeGame = null;
-    document.getElementById("btn-resume-game").classList.add("hidden");
-    document.getElementById("btn-abandon-game").classList.add("hidden");
-    document.getElementById("abandon-confirm").classList.add("hidden");
+    currentGame = await getGame(gameId);
+    renderRoundScreen();
+    showScreen("round");
   } catch (err) {
     console.error(err);
-    document.getElementById("abandon-confirm").classList.add("hidden");
-    document.getElementById("btn-abandon-game").classList.remove("hidden");
   }
 });
 
@@ -223,13 +249,6 @@ document.getElementById("btn-start-game").addEventListener("click", async () => 
     errorsEl.textContent =
       "Impossible de créer la partie. Vérifie la configuration Firebase (js/firebase-config.js) et ta connexion.";
   }
-});
-
-document.getElementById("btn-resume-game").addEventListener("click", () => {
-  if (!pendingResumeGame) return;
-  currentGame = pendingResumeGame;
-  renderRoundScreen();
-  showScreen("round");
 });
 
 document.getElementById("btn-new-game").addEventListener("click", () => {

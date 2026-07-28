@@ -120,9 +120,9 @@ des points.
   totaux automatiquement.
 - **Suppression d'une partie** : dans l'historique, un bouton 🗑 par partie permet de la supprimer
   définitivement (avec confirmation).
-- **Abandon d'une partie en cours** : sur l'écran d'accueil, un bouton "Abandonner la partie en cours"
-  (à côté de "Reprendre la partie en cours") permet de supprimer définitivement une partie non terminée
-  (avec confirmation).
+- **Liste des parties en cours** : l'écran d'accueil affiche **toutes** les parties non terminées (et
+  pas seulement la plus récente), chacune avec ses joueurs et sa manche actuelle. Touche une partie pour
+  la reprendre, ou son bouton 🗑 pour l'abandonner définitivement (avec confirmation).
 
 ## Limites connues (v1)
 

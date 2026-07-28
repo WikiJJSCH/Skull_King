@@ -65,14 +65,13 @@ function toMillis(ts) {
   return ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0;
 }
 
-export async function getInProgressGame() {
+export async function listInProgressGames() {
   const database = initDb();
   const q = query(collection(database, GAMES_COLLECTION), where("status", "==", "in_progress"));
   const snap = await getDocs(q);
-  if (snap.empty) return null;
   const games = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   games.sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
-  return games[0];
+  return games;
 }
 
 export async function listFinishedGames() {
