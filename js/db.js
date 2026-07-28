@@ -6,6 +6,7 @@ import {
   addDoc,
   doc,
   updateDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   query,
@@ -50,6 +51,12 @@ export async function getGame(gameId) {
   const ref = doc(database, GAMES_COLLECTION, gameId);
   const snap = await getDoc(ref);
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function deleteGame(gameId) {
+  const database = initDb();
+  const ref = doc(database, GAMES_COLLECTION, gameId);
+  await deleteDoc(ref);
 }
 
 // Tri effectué côté client (et non via orderBy Firestore) pour éviter d'exiger

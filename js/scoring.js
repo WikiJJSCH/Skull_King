@@ -59,6 +59,19 @@ export const BONUS_MAX = {
   secondCaptured: 1,
 };
 
+export const BONUS_LABELS = {
+  skullKingCapturesPirate: "Skull King capture un Pirate",
+  pirateCapturesMermaid: "Pirate capture une Sirène",
+  mermaidCapturesSkullKing: "Sirène capture le Skull King",
+  bonus14Normal: "Carte 14 bonus (couleur)",
+  bonus14Black: "Carte 14 bonus noire",
+  butinAlliance: "Alliance Butin réussie (règle avancée)",
+  card7Malus: "Carte 7 remportée, annonce réussie (ext.)",
+  card8Bonus: "Carte 8 remportée, annonce réussie (ext.)",
+  davyJonesLocker: "Casier de Davy Jones, Léviathans détruits (ext.)",
+  secondCaptured: "Second capturé par Skull King/Sirène (ext.)",
+};
+
 export function emptyBonuses() {
   const bonuses = {};
   for (const key of BONUS_KEYS) bonuses[key] = 0;
@@ -121,9 +134,12 @@ export function computeTotals(rounds, players) {
 }
 
 /**
+ * @param {object} rules - jeu de règles de la partie (voir DEFAULT_RULES), utilisé pour vérifier que le
+ *   total d'un bonus sur l'ensemble des joueurs ne dépasse pas le nombre de cartes réellement en jeu
+ *   (ex: un seul Skull King ne peut être capturé par une sirène qu'une fois par manche, tous joueurs confondus)
  * @param {number} voidedTricks - plis annulés ce tour (Kraken / Baleine blanche), personne ne les remporte
  */
-export function validateRoundEntries(roundNumber, entries, players, voidedTricks = 0) {
+export function validateRoundEntries(roundNumber, entries, players, rules, voidedTricks = 0) {
   const errors = [];
   let sumTricks = 0;
   for (const p of players) {
@@ -148,5 +164,21 @@ export function validateRoundEntries(roundNumber, entries, players, voidedTricks
       `Le total des plis remportés (${sumTricks}) + plis annulés (${voidedTricks}) doit être égal à ${roundNumber}`
     );
   }
+
+  const enabled = (rules && rules.enabled) || {};
+  for (const key of BONUS_KEYS) {
+    if (!enabled[key]) continue;
+    let sum = 0;
+    for (const p of players) {
+      const e = entries[p.id];
+      if (e && e.bonuses) sum += e.bonuses[key] || 0;
+    }
+    if (sum > BONUS_MAX[key]) {
+      errors.push(
+        `${BONUS_LABELS[key]} : total sur la manche (${sum}) dépasse le maximum possible (${BONUS_MAX[key]})`
+      );
+    }
+  }
+
   return errors;
 }

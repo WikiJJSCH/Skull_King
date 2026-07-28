@@ -113,10 +113,20 @@ cartes de l'extension (0/14, 15 joker, Raie tachetée, Dernière salve, Supplice
 carte Pirate Mary Throne) changent uniquement le déroulement d'un pli et n'ont pas d'impact sur le calcul
 des points.
 
+## Fonctionnalités complémentaires
+
+- **Correction d'une manche passée** : dans le tableau des scores (en cours de partie ou une fois la
+  partie terminée), touche une ligne de manche pour rouvrir sa saisie, la corriger et recalculer les
+  totaux automatiquement.
+- **Suppression d'une partie** : dans l'historique, un bouton 🗑 par partie permet de la supprimer
+  définitivement (avec confirmation).
+
 ## Limites connues (v1)
 
 - Pas de synchronisation multi-appareils : un seul téléphone sert de "marqueur de points" pendant la
   partie (choix assumé, voir plan d'implémentation).
-- Les compteurs de bonus par joueur ne sont pas croisés entre joueurs (ex: rien n'empêche de saisir la
-  capture du Skull King par une sirène pour deux joueurs différents sur la même manche) : on fait
-  confiance à la saisie des joueurs.
+- La cohérence entre joueurs est vérifiée au niveau du **total par bonus sur la manche** (ex: impossible
+  que deux joueurs déclarent chacun avoir capturé le Skull King le même tour, puisque le total ne peut
+  pas dépasser 1 pour ce bonus). En revanche, l'application ne sait pas *laquelle* des cartes physiques a
+  été capturée par qui exactement : elle fait confiance à la répartition saisie par les joueurs tant que
+  le total reste cohérent avec le nombre de cartes en jeu.

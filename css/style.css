@@ -322,10 +322,22 @@ input[type="number"] {
   font-size: 0.85rem;
 }
 
-.bonus-toggle-list {
+.bonus-accordion {
   margin-top: 0.5rem;
   border-top: 1px dashed rgba(212, 175, 55, 0.3);
   padding-top: 0.5rem;
+}
+
+.bonus-accordion summary {
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+}
+
+.bonus-toggle-list {
+  margin-top: 0.5rem;
 }
 
 .bonus-toggle-list .rule-row {
@@ -365,6 +377,20 @@ table.scoreboard td.round-label {
 table.scoreboard tr.total-row td {
   font-weight: 700;
   background: rgba(212, 175, 55, 0.15);
+}
+
+table.scoreboard tr.round-row-editable {
+  cursor: pointer;
+}
+
+table.scoreboard tr.round-row-editable:active td {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.table-hint {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
 }
 
 /* Classement final */
@@ -424,6 +450,10 @@ table.scoreboard tr.total-row td {
 
 /* Historique */
 .history-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: var(--color-bg-alt);
   border-radius: var(--radius);
   padding: 0.75rem 1rem;
@@ -436,7 +466,43 @@ table.scoreboard tr.total-row td {
   border-color: var(--color-accent);
 }
 
+.history-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .history-item .history-date {
   font-size: 0.8rem;
   opacity: 0.7;
+}
+
+.btn-delete-history {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  padding: 0.4rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.history-confirm-delete {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-bg-alt);
+  border-radius: var(--radius);
+  padding: 0 1rem;
+  font-size: 0.85rem;
+}
+
+.history-confirm-delete span {
+  flex: 1;
+}
+
+.history-confirm-delete .btn-small {
+  margin-bottom: 0;
 }

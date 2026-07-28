@@ -1,18 +1,14 @@
-import { DEFAULT_RULES, BONUS_MAX, BONUS_KEYS, emptyBonuses, computeRoundScore, computeTotals, validateRoundEntries } from "./scoring.js";
-import { createGame, updateGame, getGame, getInProgressGame, listFinishedGames } from "./db.js";
-
-const BONUS_LABELS = {
-  skullKingCapturesPirate: "Skull King capture un Pirate",
-  pirateCapturesMermaid: "Pirate capture une Sirène",
-  mermaidCapturesSkullKing: "Sirène capture le Skull King",
-  bonus14Normal: "Carte 14 bonus (couleur)",
-  bonus14Black: "Carte 14 bonus noire",
-  butinAlliance: "Alliance Butin réussie (règle avancée)",
-  card7Malus: "Carte 7 remportée, annonce réussie (ext.)",
-  card8Bonus: "Carte 8 remportée, annonce réussie (ext.)",
-  davyJonesLocker: "Casier de Davy Jones, Léviathans détruits (ext.)",
-  secondCaptured: "Second capturé par Skull King/Sirène (ext.)",
-};
+import {
+  DEFAULT_RULES,
+  BONUS_MAX,
+  BONUS_KEYS,
+  BONUS_LABELS,
+  emptyBonuses,
+  computeRoundScore,
+  computeTotals,
+  validateRoundEntries,
+} from "./scoring.js";
+import { createGame, updateGame, getGame, getInProgressGame, listFinishedGames, deleteGame } from "./db.js";
 
 const SCREEN_NAV = {
   home: {},
@@ -28,6 +24,7 @@ const SCREEN_NAV = {
 let currentGame = null;
 let pendingResumeGame = null;
 let lastPlayerNames = ["", ""];
+let editingRoundIndex = null;
 
 function uid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -216,12 +213,12 @@ document.getElementById("btn-rules").addEventListener("click", () => showScreen(
 
 // ---------- Saisie de manche ----------
 
-function renderStepper(fieldId, max, extraAttrs = "") {
+function renderStepper(fieldId, max, extraAttrs = "", initialValue = 0) {
   return `
     <div class="stepper" data-max="${max}">
       <button type="button" class="stepper-btn stepper-minus" aria-label="Diminuer">−</button>
       <input type="number" id="${fieldId}" class="stepper-value" readonly inputmode="none" min="0" max="${max}"
-        value="0" ${extraAttrs} />
+        value="${initialValue}" ${extraAttrs} />
       <button type="button" class="stepper-btn stepper-plus" aria-label="Augmenter">+</button>
     </div>`;
 }
@@ -239,7 +236,7 @@ function handleStepperClick(e) {
 document.getElementById("round-entries").addEventListener("click", handleStepperClick);
 document.getElementById("round-voided-tricks-container").addEventListener("click", handleStepperClick);
 
-function renderBonusField(key, playerId) {
+function renderBonusField(key, playerId, initialValue = 0) {
   const max = BONUS_MAX[key];
   const label = BONUS_LABELS[key];
   const fieldId = `bonus-${key}-${playerId}`;
@@ -247,17 +244,18 @@ function renderBonusField(key, playerId) {
     return `
       <div class="rule-row">
         <label class="checkbox-label" for="${fieldId}">${label}</label>
-        <input type="checkbox" id="${fieldId}" data-bonus-key="${key}" data-player="${playerId}" />
+        <input type="checkbox" id="${fieldId}" data-bonus-key="${key}" data-player="${playerId}"
+          ${initialValue ? "checked" : ""} />
       </div>`;
   }
   return `
     <div class="rule-row">
       <label class="checkbox-label" for="${fieldId}">${label} (0-${max})</label>
-      ${renderStepper(fieldId, max, `data-bonus-key="${key}" data-player="${playerId}"`)}
+      ${renderStepper(fieldId, max, `data-bonus-key="${key}" data-player="${playerId}"`, initialValue)}
     </div>`;
 }
 
-function renderVoidedTricksField(roundNumber) {
+function renderVoidedTricksField(roundNumber, initialValue = 0) {
   const container = document.getElementById("round-voided-tricks-container");
   if (!currentGame.rules.enableVoidedTricks) {
     container.innerHTML = "";
@@ -266,46 +264,63 @@ function renderVoidedTricksField(roundNumber) {
   container.innerHTML = `
     <div class="rule-row">
       <label class="checkbox-label" for="voided-tricks">Plis annulés (Kraken / Baleine blanche, 0-${roundNumber})</label>
-      ${renderStepper("voided-tricks", roundNumber)}
+      ${renderStepper("voided-tricks", roundNumber, "", initialValue)}
     </div>`;
 }
 
-function renderRoundScreen() {
-  const roundNumber = currentGame.rounds.length + 1;
-  document.getElementById("round-title").textContent = `Manche ${roundNumber} / ${currentGame.numRounds}`;
+/**
+ * @param {number|null} editIndex - index dans currentGame.rounds à modifier, ou null pour saisir la
+ *   prochaine manche
+ */
+function renderRoundScreen(editIndex = null) {
+  editingRoundIndex = editIndex;
+  const isEdit = editIndex !== null;
+  const existing = isEdit ? currentGame.rounds[editIndex] : null;
+  const roundNumber = isEdit ? existing.roundNumber : currentGame.rounds.length + 1;
+
+  document.getElementById("round-title").textContent = isEdit
+    ? `Modifier la manche ${roundNumber} / ${currentGame.numRounds}`
+    : `Manche ${roundNumber} / ${currentGame.numRounds}`;
   document.getElementById("round-errors").textContent = "";
-  renderVoidedTricksField(roundNumber);
+  renderVoidedTricksField(roundNumber, existing ? existing.voidedTricks || 0 : 0);
 
   const enabledBonusKeys = BONUS_KEYS.filter((k) => currentGame.rules.enabled[k]);
 
   const html = currentGame.players
     .map((p) => {
-      const bonusHtml = enabledBonusKeys.map((k) => renderBonusField(k, p.id)).join("");
+      const entry = existing ? existing.entries[p.id] : null;
+      const bonusHtml = enabledBonusKeys
+        .map((k) => renderBonusField(k, p.id, entry && entry.bonuses ? entry.bonuses[k] || 0 : 0))
+        .join("");
       return `
         <div class="player-round-card">
           <h3>${escapeHtml(p.name)}</h3>
           <div class="round-inputs-row">
             <div>
               <label for="bid-${p.id}">Annonce</label>
-              ${renderStepper(`bid-${p.id}`, roundNumber)}
+              ${renderStepper(`bid-${p.id}`, roundNumber, "", entry ? entry.bid || 0 : 0)}
             </div>
             <div>
               <label for="tricks-${p.id}">Plis remportés</label>
-              ${renderStepper(`tricks-${p.id}`, roundNumber)}
+              ${renderStepper(`tricks-${p.id}`, roundNumber, "", entry ? entry.tricksWon || 0 : 0)}
             </div>
           </div>
-          ${bonusHtml ? `<div class="bonus-toggle-list">${bonusHtml}</div>` : ""}
+          ${bonusHtml ? `<details class="bonus-accordion"><summary>Bonus</summary><div class="bonus-toggle-list">${bonusHtml}</div></details>` : ""}
         </div>`;
     })
     .join("");
 
   document.getElementById("round-entries").innerHTML = html;
+  document.getElementById("btn-validate-round").textContent = isEdit
+    ? "Enregistrer les modifications"
+    : "Valider la manche";
 }
 
 document.getElementById("btn-validate-round").addEventListener("click", async () => {
   const errorsEl = document.getElementById("round-errors");
   errorsEl.textContent = "";
-  const roundNumber = currentGame.rounds.length + 1;
+  const isEdit = editingRoundIndex !== null;
+  const roundNumber = isEdit ? currentGame.rounds[editingRoundIndex].roundNumber : currentGame.rounds.length + 1;
 
   const entries = {};
   for (const p of currentGame.players) {
@@ -324,7 +339,7 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     ? parseInt(document.getElementById("voided-tricks").value, 10) || 0
     : 0;
 
-  const errors = validateRoundEntries(roundNumber, entries, currentGame.players, voidedTricks);
+  const errors = validateRoundEntries(roundNumber, entries, currentGame.players, currentGame.rules, voidedTricks);
   if (errors.length > 0) {
     errorsEl.textContent = errors.join("\n");
     return;
@@ -335,10 +350,13 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     e.score = computeRoundScore(roundNumber, e.bid, e.tricksWon, e.bonuses, currentGame.rules);
   }
 
-  currentGame.rounds.push({ roundNumber, voidedTricks, entries });
+  if (isEdit) {
+    currentGame.rounds[editingRoundIndex] = { roundNumber, voidedTricks, entries };
+  } else {
+    currentGame.rounds.push({ roundNumber, voidedTricks, entries });
+    currentGame.status = currentGame.rounds.length >= currentGame.numRounds ? "finished" : "in_progress";
+  }
   currentGame.totals = computeTotals(currentGame.rounds, currentGame.players);
-  const finished = currentGame.rounds.length >= currentGame.numRounds;
-  currentGame.status = finished ? "finished" : "in_progress";
 
   try {
     await updateGame(currentGame.id, {
@@ -353,7 +371,9 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     return;
   }
 
-  if (finished) {
+  editingRoundIndex = null;
+
+  if (currentGame.status === "finished") {
     renderFinished();
     showScreen("finished");
   } else {
@@ -368,14 +388,19 @@ function rankedPlayers(game) {
   return [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
 }
 
-function buildScoreboardTable(game) {
+function buildScoreboardTable(game, { editable = false } = {}) {
   const players = game.players;
-  let html = '<table class="scoreboard"><thead><tr><th>Manche</th>';
+  let html = "";
+  if (editable) {
+    html += '<p class="table-hint">Touchez une manche pour la corriger.</p>';
+  }
+  html += '<table class="scoreboard"><thead><tr><th>Manche</th>';
   html += players.map((p) => `<th>${escapeHtml(p.name)}</th>`).join("");
   html += "</tr></thead><tbody>";
-  for (const round of game.rounds) {
+  game.rounds.forEach((round, index) => {
     const voidedNote = round.voidedTricks ? ` (${round.voidedTricks} annulé${round.voidedTricks > 1 ? "s" : ""})` : "";
-    html += `<tr><td class="round-label">${round.roundNumber}${voidedNote}</td>`;
+    const rowAttrs = editable ? ` class="round-row-editable" data-round-index="${index}"` : "";
+    html += `<tr${rowAttrs}><td class="round-label">${round.roundNumber}${voidedNote}</td>`;
     html += players
       .map((p) => {
         const e = round.entries[p.id];
@@ -383,16 +408,28 @@ function buildScoreboardTable(game) {
       })
       .join("");
     html += "</tr>";
-  }
+  });
   html += '<tr class="total-row"><td class="round-label">Total</td>';
   html += players.map((p) => `<td>${game.totals[p.id] || 0}</td>`).join("");
   html += "</tr></tbody></table>";
   return html;
 }
 
+function handleScoreboardRowClick(e) {
+  const row = e.target.closest("tr.round-row-editable");
+  if (!row) return;
+  renderRoundScreen(parseInt(row.dataset.roundIndex, 10));
+  showScreen("round");
+}
+
+document.getElementById("scoreboard-table-container").addEventListener("click", handleScoreboardRowClick);
+document.getElementById("finished-ranking").addEventListener("click", handleScoreboardRowClick);
+
 function renderScoreboard() {
   document.getElementById("scoreboard-title").textContent = "Scores";
-  document.getElementById("scoreboard-table-container").innerHTML = buildScoreboardTable(currentGame);
+  document.getElementById("scoreboard-table-container").innerHTML = buildScoreboardTable(currentGame, {
+    editable: true,
+  });
   const nextRoundNumber = currentGame.rounds.length + 1;
   document.getElementById("btn-next-round").textContent = `Manche suivante (${nextRoundNumber}/${currentGame.numRounds})`;
 }
@@ -406,7 +443,7 @@ document.getElementById("btn-next-round").addEventListener("click", () => {
 
 function renderFinished() {
   const ranked = rankedPlayers(currentGame);
-  const html = ranked
+  const rankingHtml = ranked
     .map(
       (p, idx) => `
       <div class="ranking-item ${idx === 0 ? "rank-1" : ""}">
@@ -415,7 +452,8 @@ function renderFinished() {
       </div>`
     )
     .join("");
-  document.getElementById("finished-ranking").innerHTML = html;
+  document.getElementById("finished-ranking").innerHTML =
+    rankingHtml + buildScoreboardTable(currentGame, { editable: true });
 }
 
 document.getElementById("btn-finished-new-game").addEventListener("click", () => {
@@ -442,23 +480,57 @@ async function renderHistoryList() {
         const date = g.createdAt && g.createdAt.toDate ? g.createdAt.toDate().toLocaleDateString("fr-FR") : "";
         return `
           <div class="history-item" data-game-id="${g.id}">
-            <div>${g.players.map((p) => escapeHtml(p.name)).join(", ")}</div>
-            <div class="history-date">${date} — Gagnant : ${escapeHtml(winner.name)} (${g.totals[winner.id] || 0} pts)</div>
+            <div class="history-item-main">
+              <div>${g.players.map((p) => escapeHtml(p.name)).join(", ")}</div>
+              <div class="history-date">${date} — Gagnant : ${escapeHtml(winner.name)} (${g.totals[winner.id] || 0} pts)</div>
+            </div>
+            <button type="button" class="btn-delete-history" aria-label="Supprimer la partie">🗑</button>
+            <div class="history-confirm-delete hidden">
+              <span>Supprimer définitivement cette partie ?</span>
+              <button type="button" class="btn-small btn-cancel-delete">Annuler</button>
+              <button type="button" class="btn-small btn-danger btn-confirm-delete">Supprimer</button>
+            </div>
           </div>`;
       })
       .join("");
-    container.querySelectorAll(".history-item").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const game = await getGame(el.dataset.gameId);
-        renderHistoryDetail(game);
-        showScreen("history-detail");
-      });
-    });
   } catch (err) {
     console.error(err);
     container.textContent = "Impossible de charger l'historique. Vérifie ta connexion.";
   }
 }
+
+document.getElementById("history-list").addEventListener("click", async (e) => {
+  const item = e.target.closest(".history-item");
+  if (!item) return;
+  const gameId = item.dataset.gameId;
+
+  if (e.target.closest(".btn-delete-history")) {
+    item.querySelector(".history-confirm-delete").classList.remove("hidden");
+    e.target.closest(".btn-delete-history").classList.add("hidden");
+    return;
+  }
+  if (e.target.closest(".btn-cancel-delete")) {
+    item.querySelector(".history-confirm-delete").classList.add("hidden");
+    item.querySelector(".btn-delete-history").classList.remove("hidden");
+    return;
+  }
+  if (e.target.closest(".btn-confirm-delete")) {
+    try {
+      await deleteGame(gameId);
+      item.remove();
+    } catch (err) {
+      console.error(err);
+      item.querySelector(".history-confirm-delete").classList.add("hidden");
+      item.querySelector(".btn-delete-history").classList.remove("hidden");
+    }
+    return;
+  }
+  if (e.target.closest("button")) return;
+
+  const game = await getGame(gameId);
+  renderHistoryDetail(game);
+  showScreen("history-detail");
+});
 
 function renderHistoryDetail(game) {
   const ranked = [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
