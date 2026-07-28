@@ -24,7 +24,86 @@
       <div class="button-stack">
         <button id="btn-resume-game" class="btn btn-primary hidden">Reprendre la partie en cours</button>
         <button id="btn-new-game" class="btn btn-primary">Nouvelle partie</button>
+        <button id="btn-rules" class="btn btn-secondary">Règles du jeu</button>
         <button id="btn-history" class="btn btn-secondary">Historique des parties</button>
+      </div>
+    </section>
+
+    <!-- Règles du jeu -->
+    <section class="screen" id="screen-rules">
+      <h2>Règles du jeu</h2>
+      <div class="rules-content">
+        <p>
+          Skull King est un jeu de plis : à chaque manche, vous annoncez combien de plis vous pensez
+          remporter, puis vous essayez de réaliser exactement cette annonce.
+        </p>
+
+        <h3>Déroulement d'une manche</h3>
+        <ul>
+          <li>Le numéro de la manche correspond au nombre de cartes distribuées à chaque joueur (1 carte
+            à la manche 1, jusqu'à 10 cartes à la manche 10).</li>
+          <li>Chaque joueur annonce le nombre de plis qu'il pense remporter, avant que la manche ne
+            commence.</li>
+          <li>Les joueurs jouent ensuite un pli à la fois : chacun pose une carte, la plus forte remporte
+            le pli.</li>
+          <li>Ordre de force : Fuite/Tigresse-en-fuite (ne peuvent pas gagner) &lt; cartes de couleur
+            normale (la couleur demandée l'emporte, sauf atout) &lt; couleur atout (drapeau pirate noir)
+            &lt; cartes Pirate &lt; Skull King &lt; Sirène (qui bat uniquement le Skull King).</li>
+          <li>Une fois tous les plis joués, on calcule le score de chaque joueur pour la manche.</li>
+        </ul>
+
+        <h3>Calcul des points</h3>
+        <ul>
+          <li><strong>Annonce non nulle réussie</strong> : 20 points par pli annoncé.</li>
+          <li><strong>Annonce non nulle ratée</strong> : -10 points par pli d'écart entre l'annonce et le
+            résultat.</li>
+          <li><strong>Annonce à 0 réussie</strong> (aucun pli remporté) : 10 points × le numéro de la
+            manche.</li>
+          <li><strong>Annonce à 0 ratée</strong> (au moins un pli remporté) : -10 points × le numéro de la
+            manche.</li>
+        </ul>
+
+        <h3>Bonus</h3>
+        <p>En plus du score de base, des points bonus peuvent s'ajouter à chaque manche :</p>
+        <ul>
+          <li>Posséder une carte "14" de couleur normale en fin de manche : +10 points chacune.</li>
+          <li>Posséder la carte "14" noire (drapeau pirate) en fin de manche : +20 points.</li>
+          <li>Capturer un Pirate avec le Skull King : +30 points par pirate.</li>
+          <li>Capturer une Sirène avec un Pirate : +20 points par sirène.</li>
+          <li>Capturer le Skull King avec une Sirène : +40 points.</li>
+        </ul>
+        <p>
+          Ces bonus reviennent à celui qui remporte le pli contenant la carte, peu importe qui l'a jouée.
+          Toutes ces valeurs sont modifiables dans l'écran de configuration d'une partie.
+        </p>
+
+        <h3>Règles avancées (optionnelles)</h3>
+        <p>Certaines tables ajoutent des cartes supplémentaires pour pimenter la partie :</p>
+        <ul>
+          <li><strong>Kraken</strong> et <strong>Baleine blanche</strong> : quand l'une de ces cartes est
+            jouée, le pli est entièrement annulé (personne ne le remporte).</li>
+          <li><strong>Cartes Butin</strong> : en jouant une carte Butin, vous formez une alliance avec le
+            joueur qui remportera ce pli. Si vous respectez tous les deux votre annonce ce tour, vous
+            gagnez chacun un bonus.</li>
+        </ul>
+        <p>
+          Ces règles sont désactivables dans l'écran de configuration ("Règles de score", section
+          "Règles avancées") si votre table ne les utilise pas.
+        </p>
+
+        <h3>Fin de partie</h3>
+        <p>
+          La partie se joue en plusieurs manches (10 par défaut, configurable). Le joueur avec le plus de
+          points cumulés à la fin remporte la partie.
+        </p>
+
+        <p>
+          Ce résumé ne remplace pas le livret officiel. Pour la règle complète (dont le livret en
+          français) et la FAQ, consulte la page de l'éditeur :
+          <a href="https://www.grandpabecksgames.com/pages/skull-king" target="_blank" rel="noopener noreferrer">
+            grandpabecksgames.com/pages/skull-king
+          </a>.
+        </p>
       </div>
     </section>
 

@@ -18,6 +18,7 @@ const SCREEN_NAV = {
   finished: {},
   history: { back: "home" },
   "history-detail": { back: "history" },
+  rules: { back: "home" },
 };
 
 let currentGame = null;
@@ -207,6 +208,7 @@ document.getElementById("btn-new-game").addEventListener("click", () => {
 });
 
 document.getElementById("btn-history").addEventListener("click", () => navigateTo("history"));
+document.getElementById("btn-rules").addEventListener("click", () => showScreen("rules"));
 
 // ---------- Saisie de manche ----------
 
