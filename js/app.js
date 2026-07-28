@@ -61,13 +61,17 @@ async function navigateTo(name) {
 async function renderHome() {
   const statusEl = document.getElementById("home-status");
   const resumeBtn = document.getElementById("btn-resume-game");
+  const abandonBtn = document.getElementById("btn-abandon-game");
   statusEl.textContent = "";
   resumeBtn.classList.add("hidden");
+  abandonBtn.classList.add("hidden");
+  document.getElementById("abandon-confirm").classList.add("hidden");
   pendingResumeGame = null;
   try {
     pendingResumeGame = await getInProgressGame();
     if (pendingResumeGame) {
       resumeBtn.classList.remove("hidden");
+      abandonBtn.classList.remove("hidden");
     }
   } catch (err) {
     console.error(err);
@@ -75,6 +79,31 @@ async function renderHome() {
       "Impossible de contacter la base de données. Vérifie la configuration Firebase (js/firebase-config.js) et ta connexion.";
   }
 }
+
+document.getElementById("btn-abandon-game").addEventListener("click", () => {
+  document.getElementById("btn-abandon-game").classList.add("hidden");
+  document.getElementById("abandon-confirm").classList.remove("hidden");
+});
+
+document.getElementById("btn-cancel-abandon").addEventListener("click", () => {
+  document.getElementById("abandon-confirm").classList.add("hidden");
+  document.getElementById("btn-abandon-game").classList.remove("hidden");
+});
+
+document.getElementById("btn-confirm-abandon").addEventListener("click", async () => {
+  if (!pendingResumeGame) return;
+  try {
+    await deleteGame(pendingResumeGame.id);
+    pendingResumeGame = null;
+    document.getElementById("btn-resume-game").classList.add("hidden");
+    document.getElementById("btn-abandon-game").classList.add("hidden");
+    document.getElementById("abandon-confirm").classList.add("hidden");
+  } catch (err) {
+    console.error(err);
+    document.getElementById("abandon-confirm").classList.add("hidden");
+    document.getElementById("btn-abandon-game").classList.remove("hidden");
+  }
+});
 
 // ---------- Configuration (setup) ----------
 
