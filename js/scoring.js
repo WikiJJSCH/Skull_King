@@ -1,5 +1,14 @@
 // Moteur de score Skull King - fonctions pures, sans dépendance UI/DB.
 
+export const BONUS_KEYS = [
+  "skullKingCapturesPirate",
+  "pirateCapturesMermaid",
+  "mermaidCapturesSkullKing",
+  "bonus14Normal",
+  "bonus14Black",
+  "butinAlliance",
+];
+
 export const DEFAULT_RULES = {
   bidZeroSuccess: 10,       // par numéro de manche, si annonce=0 et 0 pli remporté
   bidZeroFail: 10,          // (magnitude, appliqué en négatif) si annonce=0 et au moins 1 pli remporté
@@ -7,15 +16,18 @@ export const DEFAULT_RULES = {
   bidFailPerTrickDiff: 10,  // (magnitude, appliqué en négatif) par pli d'écart, si annonce != 0 non respectée
   skullKingCapturesPirate: 30, // par pirate capturé par le Skull King (max 3 dans le jeu)
   pirateCapturesMermaid: 20,   // par sirène capturée par un pirate (max 2 dans le jeu)
-  mermaidCapturesSkullKing: 50, // Skull King capturé par une sirène (max 1 dans le jeu)
+  mermaidCapturesSkullKing: 40, // Skull King capturé par une sirène (max 1 dans le jeu)
   bonus14Normal: 10,        // par carte "14" bonus d'une couleur normale (max 3: jaune/violet/vert)
   bonus14Black: 20,         // carte "14" bonus noire (Jolly Roger) (max 1)
+  butinAlliance: 20,        // règle avancée : alliance Butin réussie (max 2 cartes Butin dans le jeu)
+  enableVoidedTricks: true, // règle avancée : le Kraken / la Baleine blanche peuvent annuler un pli
   enabled: {
     skullKingCapturesPirate: true,
     pirateCapturesMermaid: true,
     mermaidCapturesSkullKing: true,
     bonus14Normal: true,
     bonus14Black: true,
+    butinAlliance: true,
   },
 };
 
@@ -25,16 +37,13 @@ export const BONUS_MAX = {
   mermaidCapturesSkullKing: 1,
   bonus14Normal: 3,
   bonus14Black: 1,
+  butinAlliance: 2,
 };
 
 export function emptyBonuses() {
-  return {
-    skullKingCapturesPirate: 0,
-    pirateCapturesMermaid: 0,
-    mermaidCapturesSkullKing: 0,
-    bonus14Normal: 0,
-    bonus14Black: 0,
-  };
+  const bonuses = {};
+  for (const key of BONUS_KEYS) bonuses[key] = 0;
+  return bonuses;
 }
 
 /**
@@ -62,11 +71,9 @@ export function computeRoundScore(roundNumber, bid, tricksWon, bonuses, rules) {
   const b = bonuses || emptyBonuses();
   const enabled = rules.enabled || {};
   let bonusTotal = 0;
-  if (enabled.skullKingCapturesPirate) bonusTotal += (b.skullKingCapturesPirate || 0) * rules.skullKingCapturesPirate;
-  if (enabled.pirateCapturesMermaid) bonusTotal += (b.pirateCapturesMermaid || 0) * rules.pirateCapturesMermaid;
-  if (enabled.mermaidCapturesSkullKing) bonusTotal += (b.mermaidCapturesSkullKing || 0) * rules.mermaidCapturesSkullKing;
-  if (enabled.bonus14Normal) bonusTotal += (b.bonus14Normal || 0) * rules.bonus14Normal;
-  if (enabled.bonus14Black) bonusTotal += (b.bonus14Black || 0) * rules.bonus14Black;
+  for (const key of BONUS_KEYS) {
+    if (enabled[key]) bonusTotal += (b[key] || 0) * rules[key];
+  }
 
   return base + bonusTotal;
 }
@@ -91,7 +98,10 @@ export function computeTotals(rounds, players) {
   return totals;
 }
 
-export function validateRoundEntries(roundNumber, entries, players) {
+/**
+ * @param {number} voidedTricks - plis annulés ce tour (Kraken / Baleine blanche), personne ne les remporte
+ */
+export function validateRoundEntries(roundNumber, entries, players, voidedTricks = 0) {
   const errors = [];
   let sumTricks = 0;
   for (const p of players) {
@@ -108,8 +118,13 @@ export function validateRoundEntries(roundNumber, entries, players) {
     }
     sumTricks += e.tricksWon || 0;
   }
-  if (sumTricks !== roundNumber) {
-    errors.push(`Le total des plis remportés (${sumTricks}) doit être égal à ${roundNumber}`);
+  if (voidedTricks < 0 || voidedTricks > roundNumber) {
+    errors.push(`Plis annulés invalides (0 à ${roundNumber})`);
+  }
+  if (sumTricks + voidedTricks !== roundNumber) {
+    errors.push(
+      `Le total des plis remportés (${sumTricks}) + plis annulés (${voidedTricks}) doit être égal à ${roundNumber}`
+    );
   }
   return errors;
 }

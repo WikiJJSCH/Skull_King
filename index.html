@@ -104,6 +104,22 @@
             </label>
             <input id="value-bonus14Black" type="number" class="rule-value" />
           </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-butinAlliance" type="checkbox" />
+              Alliance Butin réussie (règle avancée)
+            </label>
+            <input id="value-butinAlliance" type="number" class="rule-value" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Règles avancées (Léviathans)</legend>
+          <label class="checkbox-label">
+            <input id="enable-voided-tricks" type="checkbox" />
+            Autoriser les plis annulés (Kraken / Baleine blanche)
+          </label>
         </fieldset>
 
         <button id="btn-reset-rules" class="btn btn-small" type="button">Réinitialiser aux valeurs officielles</button>
@@ -116,6 +132,7 @@
     <!-- Saisie d'une manche -->
     <section class="screen" id="screen-round">
       <h2 id="round-title">Manche 1 / 10</h2>
+      <div id="round-voided-tricks-container"></div>
       <div id="round-entries"></div>
       <p id="round-errors" class="error-msg"></p>
       <button id="btn-validate-round" class="btn btn-primary">Valider la manche</button>

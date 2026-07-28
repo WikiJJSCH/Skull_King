@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, BONUS_MAX, emptyBonuses, computeRoundScore, computeTotals, validateRoundEntries } from "./scoring.js";
+import { DEFAULT_RULES, BONUS_MAX, BONUS_KEYS, emptyBonuses, computeRoundScore, computeTotals, validateRoundEntries } from "./scoring.js";
 import { createGame, updateGame, getGame, getInProgressGame, listFinishedGames } from "./db.js";
 
 const BONUS_LABELS = {
@@ -7,8 +7,8 @@ const BONUS_LABELS = {
   mermaidCapturesSkullKing: "Sirène capture le Skull King",
   bonus14Normal: "Carte 14 bonus (couleur)",
   bonus14Black: "Carte 14 bonus noire",
+  butinAlliance: "Alliance Butin réussie (règle avancée)",
 };
-const BONUS_KEYS = Object.keys(BONUS_LABELS);
 
 const SCREEN_NAV = {
   home: {},
@@ -117,6 +117,7 @@ function fillRuleInputs(rules) {
   document.getElementById("rule-bidZeroFail").value = rules.bidZeroFail;
   document.getElementById("rule-bidSuccessPerTrick").value = rules.bidSuccessPerTrick;
   document.getElementById("rule-bidFailPerTrickDiff").value = rules.bidFailPerTrickDiff;
+  document.getElementById("enable-voided-tricks").checked = !!rules.enableVoidedTricks;
   for (const key of BONUS_KEYS) {
     document.getElementById("enable-" + key).checked = !!rules.enabled[key];
     document.getElementById("value-" + key).value = rules[key];
@@ -129,6 +130,7 @@ function readRuleInputsFromForm() {
     bidZeroFail: parseInt(document.getElementById("rule-bidZeroFail").value, 10) || 0,
     bidSuccessPerTrick: parseInt(document.getElementById("rule-bidSuccessPerTrick").value, 10) || 0,
     bidFailPerTrickDiff: parseInt(document.getElementById("rule-bidFailPerTrickDiff").value, 10) || 0,
+    enableVoidedTricks: document.getElementById("enable-voided-tricks").checked,
     enabled: {},
   };
   for (const key of BONUS_KEYS) {
@@ -227,10 +229,24 @@ function renderBonusField(key, playerId) {
     </div>`;
 }
 
+function renderVoidedTricksField(roundNumber) {
+  const container = document.getElementById("round-voided-tricks-container");
+  if (!currentGame.rules.enableVoidedTricks) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `
+    <div class="rule-row">
+      <label class="checkbox-label" for="voided-tricks">Plis annulés (Kraken / Baleine blanche, 0-${roundNumber})</label>
+      <input type="number" inputmode="numeric" id="voided-tricks" class="rule-value" min="0" max="${roundNumber}" value="0" />
+    </div>`;
+}
+
 function renderRoundScreen() {
   const roundNumber = currentGame.rounds.length + 1;
   document.getElementById("round-title").textContent = `Manche ${roundNumber} / ${currentGame.numRounds}`;
   document.getElementById("round-errors").textContent = "";
+  renderVoidedTricksField(roundNumber);
 
   const enabledBonusKeys = BONUS_KEYS.filter((k) => currentGame.rules.enabled[k]);
 
@@ -276,7 +292,11 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     entries[p.id] = { bid, tricksWon, bonuses };
   }
 
-  const errors = validateRoundEntries(roundNumber, entries, currentGame.players);
+  const voidedTricks = currentGame.rules.enableVoidedTricks
+    ? parseInt(document.getElementById("voided-tricks").value, 10) || 0
+    : 0;
+
+  const errors = validateRoundEntries(roundNumber, entries, currentGame.players, voidedTricks);
   if (errors.length > 0) {
     errorsEl.textContent = errors.join("\n");
     return;
@@ -287,7 +307,7 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     e.score = computeRoundScore(roundNumber, e.bid, e.tricksWon, e.bonuses, currentGame.rules);
   }
 
-  currentGame.rounds.push({ roundNumber, entries });
+  currentGame.rounds.push({ roundNumber, voidedTricks, entries });
   currentGame.totals = computeTotals(currentGame.rounds, currentGame.players);
   const finished = currentGame.rounds.length >= currentGame.numRounds;
   currentGame.status = finished ? "finished" : "in_progress";
@@ -326,7 +346,8 @@ function buildScoreboardTable(game) {
   html += players.map((p) => `<th>${escapeHtml(p.name)}</th>`).join("");
   html += "</tr></thead><tbody>";
   for (const round of game.rounds) {
-    html += `<tr><td class="round-label">${round.roundNumber}</td>`;
+    const voidedNote = round.voidedTricks ? ` (${round.voidedTricks} annulé${round.voidedTricks > 1 ? "s" : ""})` : "";
+    html += `<tr><td class="round-label">${round.roundNumber}${voidedNote}</td>`;
     html += players
       .map((p) => {
         const e = round.entries[p.id];

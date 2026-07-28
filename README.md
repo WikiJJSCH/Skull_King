@@ -80,10 +80,22 @@ scores nécessite en revanche une connexion réseau pour joindre Firestore).
 - Annonce ≠ 0 ratée : `-10 × écart entre annonce et plis réalisés`
 - Bonus (activables/désactivables et paramétrables avant chaque partie, dans "Règles de score") :
   Skull King capture un Pirate (+30/pirate), Pirate capture une Sirène (+20/sirène), Sirène capture le
-  Skull King (+50), carte "14" bonus couleur (+10) et noire/Jolly Roger (+20)
+  Skull King (+40), carte "14" bonus couleur (+10) et noire/Jolly Roger (+20)
 
-Ces valeurs par défaut correspondent aux règles officielles ; elles sont éditables en début de partie
-pour s'adapter à une variante ou une édition différente.
+Ces valeurs par défaut correspondent aux règles officielles du livret ; elles sont éditables en début
+de partie pour s'adapter à une variante ou une édition différente.
+
+### Règles avancées (Léviathans et cartes Butin)
+
+Ces cartes sont retirées du jeu de base par défaut (voir la mise en place, p.4 du livret) et ne sont
+utilisées que si votre groupe joue avec les règles avancées :
+
+- **Kraken / Baleine blanche** : annulent entièrement un pli (personne ne le remporte). Si la case
+  "Autoriser les plis annulés" est cochée en configuration, un champ "Plis annulés" apparaît lors de la
+  saisie de chaque manche ; la validation attend alors `plis remportés + plis annulés = numéro de manche`
+  au lieu de `plis remportés = numéro de manche`.
+- **Cartes Butin** : alliance entre le joueur qui la joue et celui qui remporte le pli — si les deux
+  ont misé juste ce tour, chacun gagne un bonus (+20 par défaut, configurable comme les autres bonus).
 
 ## Limites connues (v1)
 
