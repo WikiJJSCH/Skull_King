@@ -344,6 +344,39 @@ table.scoreboard tr.total-row td {
   margin-right: 0.5rem;
 }
 
+/* Règles du jeu */
+.rules-content h3 {
+  color: var(--color-accent);
+  margin: 1.25rem 0 0.5rem;
+}
+
+.rules-content h3:first-child {
+  margin-top: 0;
+}
+
+.rules-content p {
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.rules-content ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+.rules-content li {
+  margin-bottom: 0.4rem;
+}
+
+.rules-content strong {
+  color: var(--color-accent);
+}
+
+.rules-content a {
+  color: var(--color-accent);
+}
+
 /* Historique */
 .history-item {
   background: var(--color-bg-alt);
