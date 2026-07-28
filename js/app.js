@@ -342,6 +342,11 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
   const errors = validateRoundEntries(roundNumber, entries, currentGame.players, currentGame.rules, voidedTricks);
   if (errors.length > 0) {
     errorsEl.textContent = errors.join("\n");
+    if (errors.some((e) => e.includes("dépasse le maximum possible"))) {
+      document.querySelectorAll("#round-entries .bonus-accordion").forEach((details) => {
+        details.open = true;
+      });
+    }
     return;
   }
 
