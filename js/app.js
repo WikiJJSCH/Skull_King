@@ -8,6 +8,10 @@ const BONUS_LABELS = {
   bonus14Normal: "Carte 14 bonus (couleur)",
   bonus14Black: "Carte 14 bonus noire",
   butinAlliance: "Alliance Butin réussie (règle avancée)",
+  card7Malus: "Carte 7 remportée, annonce réussie (ext.)",
+  card8Bonus: "Carte 8 remportée, annonce réussie (ext.)",
+  davyJonesLocker: "Casier de Davy Jones, Léviathans détruits (ext.)",
+  secondCaptured: "Second capturé par Skull King/Sirène (ext.)",
 };
 
 const SCREEN_NAV = {

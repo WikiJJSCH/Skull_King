@@ -97,6 +97,22 @@ utilisées que si votre groupe joue avec les règles avancées :
 - **Cartes Butin** : alliance entre le joueur qui la joue et celui qui remporte le pli — si les deux
   ont misé juste ce tour, chacun gagne un bonus (+20 par défaut, configurable comme les autres bonus).
 
+### Extension officielle
+
+Bonus de l'extension, activables/désactivables et paramétrables comme les autres ("Règles de score",
+section "Bonus extension") :
+
+- **Carte 7** remportée avec annonce réussie ce tour : -5 points (malus)
+- **Carte 8** remportée avec annonce réussie ce tour : +5 points
+- **Casier de Davy Jones** : +20 points par Léviathan détruit (Kraken/Baleine blanche/Raie tachetée)
+- **Second** capturé par le Skull King ou une Sirène : +30 points
+
+Les bonus carte 7/8 ne sont ajoutés au score que si l'annonce du joueur est respectée ce tour-là ;
+l'application le vérifie automatiquement (pas besoin de laisser le compteur à 0 soi-même). Les autres
+cartes de l'extension (0/14, 15 joker, Raie tachetée, Dernière salve, Supplice de la planche, nouvelle
+carte Pirate Mary Throne) changent uniquement le déroulement d'un pli et n'ont pas d'impact sur le calcul
+des points.
+
 ## Limites connues (v1)
 
 - Pas de synchronisation multi-appareils : un seul téléphone sert de "marqueur de points" pendant la

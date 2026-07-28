@@ -91,6 +91,26 @@
           "Règles avancées") si votre table ne les utilise pas.
         </p>
 
+        <h3>Extension officielle (optionnelle)</h3>
+        <p>
+          L'extension ajoute des cartes de couleur (7, 8, 0/14), un 15 joker, une nouvelle carte Pirate et
+          des cartes optionnelles à ajouter individuellement :
+        </p>
+        <ul>
+          <li><strong>Cartes 7 et 8</strong> : remporter le pli avec la carte 7 fait perdre 5 points,
+            avec la carte 8 fait gagner 5 points — mais uniquement si votre annonce est réussie ce tour.</li>
+          <li><strong>Casier de Davy Jones</strong> : détruit tous les Léviathans (Kraken, Baleine
+            blanche, Raie tachetée) présents dans le pli : +20 points par Léviathan détruit.</li>
+          <li><strong>Second</strong> : nouveau personnage capturable ; s'il est capturé par le Skull King
+            ou une Sirène, +30 points.</li>
+          <li><strong>15 joker, Raie tachetée, Dernière salve, Supplice de la planche</strong> : cartes qui
+            changent le déroulement du pli, sans impact sur le calcul des points.</li>
+        </ul>
+        <p>
+          Ces bonus sont désactivables dans l'écran de configuration ("Règles de score", section
+          "Bonus extension") si votre table ne joue pas avec l'extension.
+        </p>
+
         <h3>Fin de partie</h3>
         <p>
           La partie se joue en plusieurs manches (10 par défaut, configurable). Le joueur avec le plus de
@@ -99,7 +119,7 @@
 
         <p>
           Ce résumé ne remplace pas le livret officiel. Pour la règle complète (dont le livret en
-          français) et la FAQ, consulte la page de l'éditeur :
+          français, base et extension) et la FAQ, consulte la page de l'éditeur :
           <a href="https://www.grandpabecksgames.com/pages/skull-king" target="_blank" rel="noopener noreferrer">
             grandpabecksgames.com/pages/skull-king
           </a>.
@@ -190,6 +210,42 @@
               Alliance Butin réussie (règle avancée)
             </label>
             <input id="value-butinAlliance" type="number" class="rule-value" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Bonus extension</legend>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-card7Malus" type="checkbox" />
+              Carte 7 remportée, annonce réussie (malus)
+            </label>
+            <input id="value-card7Malus" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-card8Bonus" type="checkbox" />
+              Carte 8 remportée, annonce réussie (bonus)
+            </label>
+            <input id="value-card8Bonus" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-davyJonesLocker" type="checkbox" />
+              Casier de Davy Jones (par Léviathan détruit)
+            </label>
+            <input id="value-davyJonesLocker" type="number" class="rule-value" />
+          </div>
+
+          <div class="rule-row">
+            <label class="checkbox-label">
+              <input id="enable-secondCaptured" type="checkbox" />
+              Second capturé par Skull King/Sirène
+            </label>
+            <input id="value-secondCaptured" type="number" class="rule-value" />
           </div>
         </fieldset>
 
