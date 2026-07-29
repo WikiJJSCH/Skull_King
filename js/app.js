@@ -579,7 +579,44 @@ function renderFinished() {
     .join("");
   document.getElementById("finished-ranking").innerHTML =
     rankingHtml + buildScoreboardTable(currentGame, { editable: true });
+  document.getElementById("finished-share-status").textContent = "";
 }
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function buildResultShareText(game) {
+  const ranked = rankedPlayers(game);
+  const lines = ranked.map((p, idx) => {
+    const marker = MEDALS[idx] || `#${idx + 1}`;
+    return `${marker} ${p.name} — ${game.totals[p.id] || 0} pts`;
+  });
+  const roundsLabel = `${game.numRounds} manche${game.numRounds > 1 ? "s" : ""}`;
+  return `🏴‍☠️ Skull King — Résultat de la partie (${roundsLabel})\n\n${lines.join("\n")}`;
+}
+
+document.getElementById("btn-share-result").addEventListener("click", async () => {
+  const statusEl = document.getElementById("finished-share-status");
+  const text = buildResultShareText(currentGame);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+    } catch (err) {
+      if (err.name !== "AbortError") console.error(err);
+    }
+    return;
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      statusEl.textContent = "Copié dans le presse-papiers !";
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "Impossible de copier le résultat.";
+    }
+  }
+});
 
 document.getElementById("btn-finished-new-game").addEventListener("click", () => {
   initSetupScreen();
