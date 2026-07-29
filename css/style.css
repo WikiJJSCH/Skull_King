@@ -44,10 +44,21 @@ body {
 }
 
 #app-title {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-accent);
   margin: 0;
   flex: 1;
-  text-align: center;
+}
+
+.app-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .header-btn {
