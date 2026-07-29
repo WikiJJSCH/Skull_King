@@ -417,6 +417,12 @@ table.scoreboard tr.round-row-editable:active td {
   margin-bottom: 0.5rem;
 }
 
+#round-tricks-counter.counter-mismatch {
+  color: var(--color-danger);
+  opacity: 1;
+  font-weight: 700;
+}
+
 /* Classement final */
 .ranking-item {
   display: flex;

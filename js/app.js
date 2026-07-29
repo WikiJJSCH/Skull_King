@@ -291,8 +291,29 @@ function handleStepperClick(e) {
   input.value = next;
 }
 
-document.getElementById("round-entries").addEventListener("click", handleStepperClick);
-document.getElementById("round-voided-tricks-container").addEventListener("click", handleStepperClick);
+function updateTricksCounter() {
+  const counterEl = document.getElementById("round-tricks-counter");
+  const isEdit = editingRoundIndex !== null;
+  const roundNumber = isEdit ? currentGame.rounds[editingRoundIndex].roundNumber : currentGame.rounds.length + 1;
+
+  const voidedEl = document.getElementById("voided-tricks");
+  let sum = voidedEl ? parseInt(voidedEl.value, 10) || 0 : 0;
+  currentGame.players.forEach((p) => {
+    const el = document.getElementById(`tricks-${p.id}`);
+    sum += parseInt(el.value, 10) || 0;
+  });
+
+  counterEl.textContent = `Plis saisis : ${sum} / ${roundNumber}`;
+  counterEl.classList.toggle("counter-mismatch", sum !== roundNumber);
+}
+
+function handleStepperClickAndUpdateCounter(e) {
+  handleStepperClick(e);
+  updateTricksCounter();
+}
+
+document.getElementById("round-entries").addEventListener("click", handleStepperClickAndUpdateCounter);
+document.getElementById("round-voided-tricks-container").addEventListener("click", handleStepperClickAndUpdateCounter);
 
 function renderBonusField(key, playerId, initialValue = 0) {
   const max = BONUS_MAX[key];
@@ -405,6 +426,7 @@ function renderRoundScreen(editIndex = null) {
   document.getElementById("btn-validate-round").textContent = isEdit
     ? "Enregistrer les modifications"
     : "Valider la manche";
+  updateTricksCounter();
 }
 
 document.getElementById("btn-validate-round").addEventListener("click", async () => {
