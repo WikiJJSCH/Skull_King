@@ -7,6 +7,7 @@ import {
   computeRoundScore,
   computeTotals,
   validateRoundEntries,
+  getBidOrder,
 } from "./scoring.js";
 import { createGame, updateGame, getGame, listInProgressGames, listFinishedGames, deleteGame } from "./db.js";
 
@@ -350,11 +351,19 @@ function renderRoundScreen(editIndex = null) {
   document.getElementById("round-errors").textContent = "";
   renderVoidedTricksField(roundNumber, existing ? existing.voidedTricks || 0 : 0);
 
+  const { dealerIndex, order: bidOrder } = getBidOrder(roundNumber, currentGame.players);
+  const bidPositionByPlayerId = {};
+  bidOrder.forEach((p, i) => {
+    bidPositionByPlayerId[p.id] = i + 1;
+  });
+  document.getElementById("round-dealer-info").textContent =
+    `Donneur : ${currentGame.players[dealerIndex].name}`;
+
   const simplifiedBonus = !!currentGame.rules.simplifiedBonusMode;
   const enabledBonusKeys = BONUS_KEYS.filter((k) => currentGame.rules.enabled[k]);
 
   const html = currentGame.players
-    .map((p) => {
+    .map((p, idx) => {
       const entry = existing ? existing.entries[p.id] : null;
       let detailedBonusHtml = "";
       let simpleBonusColumnHtml = "";
@@ -368,9 +377,14 @@ function renderRoundScreen(editIndex = null) {
           ? `<details class="bonus-accordion"><summary>Bonus</summary><div class="bonus-toggle-list">${bonusHtml}</div></details>`
           : "";
       }
+      const dealerBadge = idx === dealerIndex ? '<span class="dealer-badge" title="Donneur">🎲</span>' : "";
       return `
         <div class="player-round-card">
-          <h3>${escapeHtml(p.name)}</h3>
+          <h3>
+            <span class="bid-order-badge" title="Ordre d'annonce">${bidPositionByPlayerId[p.id]}</span>
+            ${escapeHtml(p.name)}
+            ${dealerBadge}
+          </h3>
           <div class="round-inputs-row">
             <div>
               <label for="bid-${p.id}">Annonce</label>

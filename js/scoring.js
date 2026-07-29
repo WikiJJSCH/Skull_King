@@ -121,6 +121,26 @@ export function computeRoundScore(roundNumber, bid, tricksWon, bonuses, rules, s
 }
 
 /**
+ * Calcule le donneur et l'ordre d'annonce d'une manche. Le donneur tourne d'une
+ * position par manche en suivant l'ordre des joueurs défini à la création de la
+ * partie ; le joueur suivant le donneur annonce en premier, le donneur en dernier.
+ * @param {number} roundNumber - numéro de la manche (1..N)
+ * @param {Array} players - tableau de joueurs { id, name }
+ * @returns {{dealerIndex: number, order: Array}} index du donneur dans `players`,
+ *   et les joueurs réordonnés en partant du premier à annoncer (le donneur est
+ *   toujours en dernière position de `order`)
+ */
+export function getBidOrder(roundNumber, players) {
+  const n = players.length;
+  const dealerIndex = (roundNumber - 1) % n;
+  const order = [];
+  for (let i = 0; i < n; i++) {
+    order.push(players[(dealerIndex + 1 + i) % n]);
+  }
+  return { dealerIndex, order };
+}
+
+/**
  * Calcule les totaux cumulés par joueur sur l'ensemble des manches jouées.
  * @param {Array} rounds - tableau de manches { entries: { [playerId]: { score } } }
  * @param {Array} players - tableau de joueurs { id }
