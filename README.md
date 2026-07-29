@@ -85,6 +85,11 @@ scores nécessite en revanche une connexion réseau pour joindre Firestore).
 Ces valeurs par défaut correspondent aux règles officielles du livret ; elles sont éditables en début
 de partie pour s'adapter à une variante ou une édition différente.
 
+**Mode simplifié des bonus** : en alternative à la liste détaillée ci-dessus, un réglage ("Mode de
+saisie des bonus" dans la configuration de partie) permet de saisir un simple ajustement de score par
+pas de 5 (+/-) pour chaque joueur à chaque manche, sans détail par type de bonus. Ce réglage est fixé
+pour toute la durée de la partie.
+
 ### Règles avancées (Léviathans et cartes Butin)
 
 Ces cartes sont retirées du jeu de base par défaut (voir la mise en place, p.4 du livret) et ne sont
@@ -123,6 +128,18 @@ des points.
 - **Liste des parties en cours** : l'écran d'accueil affiche **toutes** les parties non terminées (et
   pas seulement la plus récente), chacune avec ses joueurs et sa manche actuelle. Touche une partie pour
   la reprendre, ou son bouton 🗑 pour l'abandonner définitivement (avec confirmation).
+- **Donneur et ordre d'annonce** : à chaque manche, le donneur (qui tourne automatiquement selon l'ordre
+  des joueurs défini à la création de la partie) est indiqué, ainsi que l'ordre d'annonce de chaque
+  joueur.
+- **Compteur de plis en direct** : pendant la saisie d'une manche, un compteur affiche le total des plis
+  remportés (+ plis annulés) saisis jusqu'ici par rapport au numéro de la manche, pour repérer une
+  erreur avant de valider.
+- **Statistiques par joueur** : un écran "Statistiques", accessible depuis l'accueil, regroupe les
+  parties terminées par nom de joueur (parties jouées, victoires et taux de victoire, score moyen,
+  meilleure et pire manche). Le regroupement se fait par nom exact, faute d'identité de joueur
+  persistante entre les parties.
+- **Partage du résultat** : en fin de partie, un bouton "Partager le résultat" génère un résumé texte du
+  classement, via l'API Web Share si disponible (sinon copie dans le presse-papiers).
 
 ## Limites connues (v1)
 
