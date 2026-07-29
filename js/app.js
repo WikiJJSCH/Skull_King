@@ -19,6 +19,7 @@ const SCREEN_NAV = {
   finished: {},
   history: { back: "home" },
   "history-detail": { back: "history" },
+  stats: { back: "home" },
   rules: { back: "home" },
 };
 
@@ -53,6 +54,7 @@ function showScreen(name) {
 async function navigateTo(name) {
   if (name === "home") await renderHome();
   else if (name === "history") await renderHistoryList();
+  else if (name === "stats") await renderStats();
   showScreen(name);
 }
 
@@ -668,6 +670,83 @@ function renderHistoryDetail(game) {
     .join("");
   document.getElementById("history-detail-content").innerHTML = rankingHtml + buildScoreboardTable(game);
 }
+
+// ---------- Statistiques par joueur ----------
+
+/**
+ * Agrège les statistiques par joueur à partir des parties terminées. Les joueurs sont
+ * regroupés par nom exact (aucune identité persistante entre parties, chaque partie
+ * génère de nouveaux id joueur).
+ */
+function computePlayerStats(games) {
+  const statsByName = {};
+
+  for (const game of games) {
+    const ranked = [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
+    const bestTotal = ranked.length > 0 ? game.totals[ranked[0].id] || 0 : 0;
+
+    for (const p of game.players) {
+      const stats =
+        statsByName[p.name] ||
+        (statsByName[p.name] = {
+          name: p.name,
+          gamesPlayed: 0,
+          wins: 0,
+          totalScoreSum: 0,
+          bestRound: null,
+          worstRound: null,
+        });
+
+      stats.gamesPlayed += 1;
+      stats.totalScoreSum += game.totals[p.id] || 0;
+      if ((game.totals[p.id] || 0) === bestTotal) stats.wins += 1;
+
+      for (const round of game.rounds) {
+        const entry = round.entries && round.entries[p.id];
+        if (!entry || typeof entry.score !== "number") continue;
+        if (stats.bestRound === null || entry.score > stats.bestRound) stats.bestRound = entry.score;
+        if (stats.worstRound === null || entry.score < stats.worstRound) stats.worstRound = entry.score;
+      }
+    }
+  }
+
+  return Object.values(statsByName).sort((a, b) => b.wins - a.wins);
+}
+
+async function renderStats() {
+  const container = document.getElementById("stats-content");
+  container.textContent = "Chargement...";
+  try {
+    const games = await listFinishedGames();
+    if (games.length === 0) {
+      container.textContent = "Aucune partie terminée pour le moment.";
+      return;
+    }
+    const stats = computePlayerStats(games);
+    container.innerHTML = stats
+      .map((s) => {
+        const winRate = Math.round((s.wins / s.gamesPlayed) * 100);
+        const avgScore = Math.round(s.totalScoreSum / s.gamesPlayed);
+        return `
+          <div class="stats-card">
+            <h3>${escapeHtml(s.name)}</h3>
+            <div class="stats-grid">
+              <div><span class="stats-value">${s.gamesPlayed}</span><span class="stats-label">Parties jouées</span></div>
+              <div><span class="stats-value">${s.wins} (${winRate}%)</span><span class="stats-label">Victoires</span></div>
+              <div><span class="stats-value">${avgScore}</span><span class="stats-label">Score moyen</span></div>
+              <div><span class="stats-value">${s.bestRound ?? "-"}</span><span class="stats-label">Meilleure manche</span></div>
+              <div><span class="stats-value">${s.worstRound ?? "-"}</span><span class="stats-label">Pire manche</span></div>
+            </div>
+          </div>`;
+      })
+      .join("");
+  } catch (err) {
+    console.error(err);
+    container.textContent = "Impossible de charger les statistiques. Vérifie ta connexion.";
+  }
+}
+
+document.getElementById("btn-stats").addEventListener("click", () => navigateTo("stats"));
 
 // ---------- Header (back/home) ----------
 
