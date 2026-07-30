@@ -518,6 +518,33 @@ function rankedPlayers(game) {
   return [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
 }
 
+function getWinners(game) {
+  const ranked = rankedPlayers(game);
+  if (ranked.length === 0) return [];
+  const bestTotal = game.totals[ranked[0].id] || 0;
+  return ranked.filter((p) => (game.totals[p.id] || 0) === bestTotal);
+}
+
+function joinNames(names) {
+  if (names.length <= 1) return names[0] || "";
+  return `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}`;
+}
+
+function buildRankingHtml(game) {
+  const ranked = rankedPlayers(game);
+  return ranked
+    .map((p) => {
+      const total = game.totals[p.id] || 0;
+      const rank = 1 + ranked.filter((o) => (game.totals[o.id] || 0) > total).length;
+      return `
+      <div class="ranking-item ${rank === 1 ? "rank-1" : ""}">
+        <span><span class="rank-position">#${rank}</span>${escapeHtml(p.name)}</span>
+        <strong>${total} pts</strong>
+      </div>`;
+    })
+    .join("");
+}
+
 function buildScoreboardTable(game, { editable = false } = {}) {
   const players = game.players;
   let html = "";
@@ -572,18 +599,8 @@ document.getElementById("btn-next-round").addEventListener("click", () => {
 // ---------- Fin de partie ----------
 
 function renderFinished() {
-  const ranked = rankedPlayers(currentGame);
-  const rankingHtml = ranked
-    .map(
-      (p, idx) => `
-      <div class="ranking-item ${idx === 0 ? "rank-1" : ""}">
-        <span><span class="rank-position">#${idx + 1}</span>${escapeHtml(p.name)}</span>
-        <strong>${currentGame.totals[p.id] || 0} pts</strong>
-      </div>`
-    )
-    .join("");
   document.getElementById("finished-ranking").innerHTML =
-    rankingHtml + buildScoreboardTable(currentGame, { editable: true });
+    buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";
 }
 
@@ -642,14 +659,19 @@ async function renderHistoryList() {
     }
     container.innerHTML = games
       .map((g) => {
-        const ranked = rankedPlayers(g);
-        const winner = ranked[0];
+        const winners = getWinners(g);
+        const winnerNames = winners.map((w) => escapeHtml(w.name));
+        const winnerPoints = g.totals[winners[0].id] || 0;
+        const winnerLabel =
+          winners.length > 1
+            ? `Égalité entre ${joinNames(winnerNames)} (${winnerPoints} pts)`
+            : `Gagnant : ${winnerNames[0]} (${winnerPoints} pts)`;
         const date = g.createdAt && g.createdAt.toDate ? g.createdAt.toDate().toLocaleDateString("fr-FR") : "";
         return `
           <div class="history-item" data-game-id="${g.id}">
             <div class="history-item-main">
               <div>${g.players.map((p) => escapeHtml(p.name)).join(", ")}</div>
-              <div class="history-date">${date} — Gagnant : ${escapeHtml(winner.name)} (${g.totals[winner.id] || 0} pts)</div>
+              <div class="history-date">${date} — ${winnerLabel}</div>
             </div>
             <button type="button" class="btn-delete-history" aria-label="Supprimer la partie">🗑</button>
             <div class="history-confirm-delete hidden">
@@ -700,17 +722,8 @@ document.getElementById("history-list").addEventListener("click", async (e) => {
 });
 
 function renderHistoryDetail(game) {
-  const ranked = rankedPlayers(game);
-  const rankingHtml = ranked
-    .map(
-      (p, idx) => `
-      <div class="ranking-item ${idx === 0 ? "rank-1" : ""}">
-        <span><span class="rank-position">#${idx + 1}</span>${escapeHtml(p.name)}</span>
-        <strong>${game.totals[p.id] || 0} pts</strong>
-      </div>`
-    )
-    .join("");
-  document.getElementById("history-detail-content").innerHTML = rankingHtml + buildScoreboardTable(game);
+  document.getElementById("history-detail-content").innerHTML =
+    buildRankingHtml(game) + buildScoreboardTable(game);
 }
 
 // ---------- Statistiques par joueur ----------
