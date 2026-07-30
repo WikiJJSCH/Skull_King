@@ -642,7 +642,7 @@ async function renderHistoryList() {
     }
     container.innerHTML = games
       .map((g) => {
-        const ranked = [...g.players].sort((a, b) => (g.totals[b.id] || 0) - (g.totals[a.id] || 0));
+        const ranked = rankedPlayers(g);
         const winner = ranked[0];
         const date = g.createdAt && g.createdAt.toDate ? g.createdAt.toDate().toLocaleDateString("fr-FR") : "";
         return `
@@ -700,7 +700,7 @@ document.getElementById("history-list").addEventListener("click", async (e) => {
 });
 
 function renderHistoryDetail(game) {
-  const ranked = [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
+  const ranked = rankedPlayers(game);
   const rankingHtml = ranked
     .map(
       (p, idx) => `
@@ -724,7 +724,7 @@ function computePlayerStats(games) {
   const statsByName = {};
 
   for (const game of games) {
-    const ranked = [...game.players].sort((a, b) => (game.totals[b.id] || 0) - (game.totals[a.id] || 0));
+    const ranked = rankedPlayers(game);
     const bestTotal = ranked.length > 0 ? game.totals[ranked[0].id] || 0 : 0;
 
     for (const p of game.players) {
