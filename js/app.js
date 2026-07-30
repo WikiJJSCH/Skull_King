@@ -475,19 +475,21 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     e.score = computeRoundScore(roundNumber, e.bid, e.tricksWon, e.bonuses, currentGame.rules, e.simpleBonus);
   }
 
-  if (isEdit) {
-    currentGame.rounds[editingRoundIndex] = { roundNumber, voidedTricks, entries };
-  } else {
-    currentGame.rounds.push({ roundNumber, voidedTricks, entries });
-    currentGame.status = currentGame.rounds.length >= currentGame.numRounds ? "finished" : "in_progress";
-  }
-  currentGame.totals = computeTotals(currentGame.rounds, currentGame.players);
+  const newRounds = isEdit
+    ? currentGame.rounds.map((r, i) => (i === editingRoundIndex ? { roundNumber, voidedTricks, entries } : r))
+    : [...currentGame.rounds, { roundNumber, voidedTricks, entries }];
+  const newStatus = isEdit
+    ? currentGame.status
+    : newRounds.length >= currentGame.numRounds
+    ? "finished"
+    : "in_progress";
+  const newTotals = computeTotals(newRounds, currentGame.players);
 
   try {
     await updateGame(currentGame.id, {
-      rounds: currentGame.rounds,
-      totals: currentGame.totals,
-      status: currentGame.status,
+      rounds: newRounds,
+      totals: newTotals,
+      status: newStatus,
     });
   } catch (err) {
     console.error(err);
@@ -496,6 +498,9 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
     return;
   }
 
+  currentGame.rounds = newRounds;
+  currentGame.status = newStatus;
+  currentGame.totals = newTotals;
   editingRoundIndex = null;
 
   if (currentGame.status === "finished") {
