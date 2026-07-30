@@ -519,10 +519,9 @@ function rankedPlayers(game) {
 }
 
 function getWinners(game) {
-  const ranked = rankedPlayers(game);
-  if (ranked.length === 0) return [];
-  const bestTotal = game.totals[ranked[0].id] || 0;
-  return ranked.filter((p) => (game.totals[p.id] || 0) === bestTotal);
+  return computeRanks(game)
+    .filter((r) => r.rank === 1)
+    .map((r) => r.player);
 }
 
 function joinNames(names) {
