@@ -530,18 +530,29 @@ function joinNames(names) {
   return `${names.slice(0, -1).join(", ")} et ${names[names.length - 1]}`;
 }
 
-function buildRankingHtml(game) {
+/**
+ * Classement des joueurs avec rang sportif (les égalités partagent le même rang,
+ * le rang suivant saute en conséquence, ex. 1, 1, 3).
+ * @returns {Array<{player: object, total: number, rank: number}>}
+ */
+function computeRanks(game) {
   const ranked = rankedPlayers(game);
-  return ranked
-    .map((p) => {
-      const total = game.totals[p.id] || 0;
-      const rank = 1 + ranked.filter((o) => (game.totals[o.id] || 0) > total).length;
-      return `
+  return ranked.map((player) => {
+    const total = game.totals[player.id] || 0;
+    const rank = 1 + ranked.filter((o) => (game.totals[o.id] || 0) > total).length;
+    return { player, total, rank };
+  });
+}
+
+function buildRankingHtml(game) {
+  return computeRanks(game)
+    .map(
+      ({ player, total, rank }) => `
       <div class="ranking-item ${rank === 1 ? "rank-1" : ""}">
-        <span><span class="rank-position">#${rank}</span>${escapeHtml(p.name)}</span>
+        <span><span class="rank-position">#${rank}</span>${escapeHtml(player.name)}</span>
         <strong>${total} pts</strong>
-      </div>`;
-    })
+      </div>`
+    )
     .join("");
 }
 
@@ -607,10 +618,16 @@ function renderFinished() {
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 function buildResultShareText(game) {
-  const ranked = rankedPlayers(game);
-  const lines = ranked.map((p, idx) => {
-    const marker = MEDALS[idx] || `#${idx + 1}`;
-    return `${marker} ${p.name} — ${game.totals[p.id] || 0} pts`;
+  const ranks = computeRanks(game);
+  const groups = [];
+  for (const { player, total, rank } of ranks) {
+    const group = groups.find((g) => g.rank === rank);
+    if (group) group.players.push(player);
+    else groups.push({ rank, total, players: [player] });
+  }
+  const lines = groups.map(({ rank, total, players }) => {
+    const marker = MEDALS[rank - 1] || `#${rank}`;
+    return `${marker} ${joinNames(players.map((p) => p.name))} — ${total} pts`;
   });
   const roundsLabel = `${game.numRounds} manche${game.numRounds > 1 ? "s" : ""}`;
   return `🏴‍☠️ Skull King — Résultat de la partie (${roundsLabel})\n\n${lines.join("\n")}`;
