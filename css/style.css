@@ -434,6 +434,33 @@ table.scoreboard tr.round-row-editable:active td {
   font-weight: 700;
 }
 
+/* Confettis (fin de partie) */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
 /* Classement final */
 .ranking-item {
   display: flex;
