@@ -608,10 +608,31 @@ document.getElementById("btn-next-round").addEventListener("click", () => {
 
 // ---------- Fin de partie ----------
 
+const CONFETTI_COLORS = ["#d4af37", "#b8952e", "#b3261e", "#f5f0e6"];
+
+function launchConfetti() {
+  const container = document.getElementById("confetti-container");
+  container.innerHTML = "";
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.backgroundColor = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    piece.style.animationDuration = `${2 + Math.random() * 1.5}s`;
+    piece.style.animationDelay = `${Math.random() * 0.4}s`;
+    container.appendChild(piece);
+  }
+  setTimeout(() => {
+    container.innerHTML = "";
+  }, 4000);
+}
+
 function renderFinished() {
   document.getElementById("finished-ranking").innerHTML =
     buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";
+  launchConfetti();
 }
 
 const MEDALS = ["🥇", "🥈", "🥉"];
