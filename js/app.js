@@ -37,6 +37,58 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
+// ---------- Sons (synthétisés en Web Audio, pas de fichier à charger) ----------
+
+let audioCtx = null;
+
+function getAudioContext() {
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return null;
+  if (!audioCtx) audioCtx = new Ctor();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playCannonSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const duration = 0.25;
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 400;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  noise.connect(filter).connect(gain).connect(ctx.destination);
+  noise.start();
+}
+
+function playVictorySound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const notes = [523.25, 659.25, 783.99]; // Do, Mi, Sol
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    const gain = ctx.createGain();
+    const startTime = ctx.currentTime + i * 0.12;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + 0.35);
+  });
+}
+
 // ---------- Navigation ----------
 
 function showScreen(name) {
@@ -502,6 +554,7 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
   currentGame.status = newStatus;
   currentGame.totals = newTotals;
   editingRoundIndex = null;
+  playCannonSound();
 
   if (currentGame.status === "finished") {
     renderFinished();
@@ -633,6 +686,7 @@ function renderFinished() {
     buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";
   launchConfetti();
+  playVictorySound();
 }
 
 const MEDALS = ["🥇", "🥈", "🥉"];
