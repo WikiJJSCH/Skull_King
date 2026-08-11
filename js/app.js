@@ -49,6 +49,10 @@ function getAudioContext() {
   return audioCtx;
 }
 
+// Amorce le contexte audio dès le premier geste sur la page (Safari/iOS exige
+// que la création/reprise se fasse directement dans un geste utilisateur).
+document.addEventListener("pointerdown", getAudioContext, { once: true });
+
 function playCannonSound() {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -484,6 +488,7 @@ function renderRoundScreen(editIndex = null) {
 }
 
 document.getElementById("btn-validate-round").addEventListener("click", async () => {
+  getAudioContext(); // amorcé tout de suite pour rester dans le geste utilisateur (iOS/Safari)
   const errorsEl = document.getElementById("round-errors");
   errorsEl.textContent = "";
   const isEdit = editingRoundIndex !== null;
