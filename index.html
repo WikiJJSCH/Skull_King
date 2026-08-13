@@ -340,6 +340,21 @@
     </section>
   </main>
 
+  <!-- Sélecteur d'avatar joueur -->
+  <div id="avatar-picker" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Avatar du joueur</h3>
+      <button id="avatar-picker-photo" class="btn btn-secondary" type="button">📷 Prendre une photo</button>
+      <p class="table-hint">Ou choisir une icône :</p>
+      <div id="avatar-picker-gallery" class="avatar-gallery"></div>
+      <div class="button-stack">
+        <button id="avatar-picker-remove" class="btn btn-small" type="button">Retirer l'avatar</button>
+        <button id="avatar-picker-cancel" class="btn btn-small" type="button">Annuler</button>
+      </div>
+    </div>
+  </div>
+  <input id="avatar-file-input" type="file" accept="image/*" capture="user" class="hidden" />
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
