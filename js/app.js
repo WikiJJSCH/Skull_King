@@ -56,22 +56,38 @@ document.addEventListener("pointerdown", getAudioContext, { once: true });
 function playCannonSound() {
   const ctx = getAudioContext();
   if (!ctx) return;
-  const duration = 0.25;
-  const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const now = ctx.currentTime;
+
+  // Crépitement initial (bruit large bande, très bref)
+  const crackDuration = 0.08;
+  const crackBuffer = ctx.createBuffer(1, ctx.sampleRate * crackDuration, ctx.sampleRate);
+  const crackData = crackBuffer.getChannelData(0);
+  for (let i = 0; i < crackData.length; i++) {
+    crackData[i] = (Math.random() * 2 - 1) * (1 - i / crackData.length);
   }
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 400;
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-  noise.connect(filter).connect(gain).connect(ctx.destination);
-  noise.start();
+  const crack = ctx.createBufferSource();
+  crack.buffer = crackBuffer;
+  const crackFilter = ctx.createBiquadFilter();
+  crackFilter.type = "lowpass";
+  crackFilter.frequency.value = 1500;
+  const crackGain = ctx.createGain();
+  crackGain.gain.setValueAtTime(0.4, now);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, now + crackDuration);
+  crack.connect(crackFilter).connect(crackGain).connect(ctx.destination);
+  crack.start(now);
+
+  // Coup grave qui porte le "boum" (fréquence descendante)
+  const thumpDuration = 0.5;
+  const thump = ctx.createOscillator();
+  thump.type = "sine";
+  thump.frequency.setValueAtTime(150, now);
+  thump.frequency.exponentialRampToValueAtTime(45, now + 0.2);
+  const thumpGain = ctx.createGain();
+  thumpGain.gain.setValueAtTime(0.5, now);
+  thumpGain.gain.exponentialRampToValueAtTime(0.001, now + thumpDuration);
+  thump.connect(thumpGain).connect(ctx.destination);
+  thump.start(now);
+  thump.stop(now + thumpDuration);
 }
 
 function playVictorySound() {
@@ -559,7 +575,9 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
   currentGame.status = newStatus;
   currentGame.totals = newTotals;
   editingRoundIndex = null;
-  playCannonSound();
+  if (currentGame.status !== "finished") {
+    playCannonSound();
+  }
 
   if (currentGame.status === "finished") {
     renderFinished();
