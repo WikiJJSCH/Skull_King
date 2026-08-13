@@ -37,6 +37,78 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
+// ---------- Sons (synthétisés en Web Audio, pas de fichier à charger) ----------
+
+let audioCtx = null;
+
+function getAudioContext() {
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return null;
+  if (!audioCtx) audioCtx = new Ctor();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+// Amorce le contexte audio dès le premier geste sur la page (Safari/iOS exige
+// que la création/reprise se fasse directement dans un geste utilisateur).
+document.addEventListener("pointerdown", getAudioContext, { once: true });
+
+function playCannonSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  // Crépitement initial (bruit large bande, très bref)
+  const crackDuration = 0.08;
+  const crackBuffer = ctx.createBuffer(1, ctx.sampleRate * crackDuration, ctx.sampleRate);
+  const crackData = crackBuffer.getChannelData(0);
+  for (let i = 0; i < crackData.length; i++) {
+    crackData[i] = (Math.random() * 2 - 1) * (1 - i / crackData.length);
+  }
+  const crack = ctx.createBufferSource();
+  crack.buffer = crackBuffer;
+  const crackFilter = ctx.createBiquadFilter();
+  crackFilter.type = "lowpass";
+  crackFilter.frequency.value = 1500;
+  const crackGain = ctx.createGain();
+  crackGain.gain.setValueAtTime(0.4, now);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, now + crackDuration);
+  crack.connect(crackFilter).connect(crackGain).connect(ctx.destination);
+  crack.start(now);
+
+  // Coup grave qui porte le "boum" (fréquence descendante)
+  const thumpDuration = 0.5;
+  const thump = ctx.createOscillator();
+  thump.type = "sine";
+  thump.frequency.setValueAtTime(150, now);
+  thump.frequency.exponentialRampToValueAtTime(45, now + 0.2);
+  const thumpGain = ctx.createGain();
+  thumpGain.gain.setValueAtTime(0.5, now);
+  thumpGain.gain.exponentialRampToValueAtTime(0.001, now + thumpDuration);
+  thump.connect(thumpGain).connect(ctx.destination);
+  thump.start(now);
+  thump.stop(now + thumpDuration);
+}
+
+function playVictorySound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const notes = [523.25, 659.25, 783.99]; // Do, Mi, Sol
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    const gain = ctx.createGain();
+    const startTime = ctx.currentTime + i * 0.12;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + 0.35);
+  });
+}
+
 // ---------- Navigation ----------
 
 function showScreen(name) {
@@ -432,6 +504,7 @@ function renderRoundScreen(editIndex = null) {
 }
 
 document.getElementById("btn-validate-round").addEventListener("click", async () => {
+  getAudioContext(); // amorcé tout de suite pour rester dans le geste utilisateur (iOS/Safari)
   const errorsEl = document.getElementById("round-errors");
   errorsEl.textContent = "";
   const isEdit = editingRoundIndex !== null;
@@ -502,6 +575,9 @@ document.getElementById("btn-validate-round").addEventListener("click", async ()
   currentGame.status = newStatus;
   currentGame.totals = newTotals;
   editingRoundIndex = null;
+  if (currentGame.status !== "finished") {
+    playCannonSound();
+  }
 
   if (currentGame.status === "finished") {
     renderFinished();
@@ -633,6 +709,7 @@ function renderFinished() {
     buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";
   launchConfetti();
+  playVictorySound();
 }
 
 const MEDALS = ["🥇", "🥈", "🥉"];

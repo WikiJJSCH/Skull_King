@@ -1,4 +1,4 @@
-const CACHE_NAME = "skull-king-v2";
+const CACHE_NAME = "skull-king-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const APP_SHELL = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
+  "./fonts/PirataOne-Regular.woff2",
 ];
 
 self.addEventListener("install", (event) => {

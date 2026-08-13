@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Pirata One";
+  src: url("../fonts/PirataOne-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-bg: #0b2545;
   --color-bg-alt: #133a63;
@@ -8,8 +16,12 @@
   --color-accent-dark: #b8952e;
   --color-danger: #b3261e;
   --color-success: #1e6b3a;
+  --color-parchment: #e9dcb8;
+  --color-parchment-border: rgba(74, 54, 16, 0.35);
+  --color-ink: #6b4a1a;
   --radius: 12px;
   --gap: 0.75rem;
+  --font-display: "Pirata One", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -25,7 +37,9 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24'%3E%3Cpath d='M0 12 Q 30 0, 60 12 T 120 12' stroke='%23d4af37' stroke-opacity='0.05' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
   color: var(--color-text-light);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -48,8 +62,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   color: var(--color-accent);
   margin: 0;
   flex: 1;
@@ -59,6 +75,19 @@ body {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
+  animation: pirate-sway 3.5s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes pirate-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-logo {
+    animation: none;
+  }
 }
 
 .header-btn {
@@ -95,6 +124,9 @@ body {
 h2 {
   margin-top: 0;
   color: var(--color-accent);
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 fieldset {
@@ -128,6 +160,8 @@ label {
   display: block;
   margin-bottom: 0.6rem;
   font-size: 0.95rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 
 input[type="text"],
@@ -180,6 +214,7 @@ input[type="number"] {
   border: 1px solid var(--color-accent);
   background: var(--color-bg-alt);
   color: var(--color-text-light);
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 700;
   line-height: 1;
@@ -224,8 +259,10 @@ input[type="number"] {
   display: block;
   width: 100%;
   padding: 0.9rem;
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
@@ -308,9 +345,22 @@ input[type="number"] {
   flex-shrink: 0;
 }
 
+/* Cartes "parchemin" (contenu : manche, classement, stats, historique) */
+.player-round-card,
+.ranking-item,
+.stats-card,
+.history-item {
+  background-color: var(--color-parchment);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(74, 54, 16, 0.05) 0px, rgba(74, 54, 16, 0.05) 1px, transparent 1px, transparent 7px),
+    repeating-linear-gradient(-45deg, rgba(74, 54, 16, 0.04) 0px, rgba(74, 54, 16, 0.04) 1px, transparent 1px, transparent 9px);
+  border: 1px solid var(--color-parchment-border);
+  box-shadow: inset 0 0 14px rgba(74, 54, 16, 0.2);
+  color: var(--color-text);
+}
+
 /* Saisie de manche */
 .player-round-card {
-  background: var(--color-bg-alt);
   border-radius: var(--radius);
   padding: 0.75rem;
   margin-bottom: 0.75rem;
@@ -321,7 +371,7 @@ input[type="number"] {
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.5rem 0;
-  color: var(--color-text-light);
+  color: var(--color-ink);
 }
 
 .bid-order-badge {
@@ -359,12 +409,12 @@ input[type="number"] {
 
 .bonus-accordion {
   margin-top: 0.5rem;
-  border-top: 1px dashed rgba(212, 175, 55, 0.3);
+  border-top: 1px dashed rgba(74, 54, 16, 0.3);
   padding-top: 0.5rem;
 }
 
 .bonus-accordion summary {
-  color: var(--color-accent);
+  color: var(--color-ink);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
@@ -466,7 +516,6 @@ table.scoreboard tr.round-row-editable:active td {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--color-bg-alt);
   border-radius: var(--radius);
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
@@ -474,13 +523,12 @@ table.scoreboard tr.round-row-editable:active td {
 }
 
 .ranking-item.rank-1 {
-  border: 2px solid var(--color-accent);
+  border: 2px solid var(--color-ink);
   font-weight: 700;
 }
 
 /* Statistiques par joueur */
 .stats-card {
-  background: var(--color-bg-alt);
   border-radius: var(--radius);
   padding: 0.75rem 1rem;
   margin-bottom: 0.75rem;
@@ -488,7 +536,7 @@ table.scoreboard tr.round-row-editable:active td {
 
 .stats-card h3 {
   margin: 0 0 0.5rem 0;
-  color: var(--color-text-light);
+  color: var(--color-ink);
 }
 
 .stats-grid {
@@ -505,16 +553,16 @@ table.scoreboard tr.round-row-editable:active td {
 .stats-value {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--color-ink);
 }
 
 .stats-label {
   font-size: 0.75rem;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 .ranking-item .rank-position {
-  color: var(--color-accent);
+  color: var(--color-ink);
   margin-right: 0.5rem;
 }
 
@@ -557,16 +605,14 @@ table.scoreboard tr.round-row-editable:active td {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--color-bg-alt);
   border-radius: var(--radius);
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
   cursor: pointer;
-  border: 1px solid transparent;
 }
 
 .history-item:active {
-  border-color: var(--color-accent);
+  border-color: var(--color-ink);
 }
 
 .history-item-main {
@@ -597,6 +643,7 @@ table.scoreboard tr.round-row-editable:active td {
   align-items: center;
   gap: 0.5rem;
   background: var(--color-bg-alt);
+  color: var(--color-text-light);
   border-radius: var(--radius);
   padding: 0 1rem;
   font-size: 0.85rem;
