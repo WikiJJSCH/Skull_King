@@ -219,10 +219,15 @@ function addPlayerRow(name = "") {
   const list = document.getElementById("players-list");
   const row = document.createElement("div");
   row.className = "player-row";
+  row.dataset.avatar = "";
   row.innerHTML = `
+    <button type="button" class="player-avatar-btn" aria-label="Choisir un avatar">
+      <span class="player-avatar player-avatar-initial">+</span>
+    </button>
     <input type="text" class="player-name-input" placeholder="Nom du joueur" value="${escapeHtml(name)}" />
     <button type="button" class="btn-remove-player" aria-label="Supprimer">✕</button>
   `;
+  row.querySelector(".player-avatar-btn").addEventListener("click", () => openAvatarPicker(row));
   row.querySelector(".btn-remove-player").addEventListener("click", () => {
     if (list.querySelectorAll(".player-row").length > 2) {
       row.remove();
@@ -243,6 +248,106 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+// ---------- Avatars joueur ----------
+
+const AVATAR_ICONS = ["⛵", "🧜‍♀️", "🦜", "⚓", "🗺️", "💰", "⚔️", "🧭"];
+
+function renderAvatar(player, extraClass = "") {
+  const avatar = player.avatar;
+  if (avatar && avatar.startsWith("data:image")) {
+    return `<img class="player-avatar ${extraClass}" src="${avatar}" alt="" />`;
+  }
+  if (avatar) {
+    return `<span class="player-avatar ${extraClass}">${avatar}</span>`;
+  }
+  const initial = (player.name || "?").trim().charAt(0).toUpperCase() || "?";
+  return `<span class="player-avatar player-avatar-initial ${extraClass}">${escapeHtml(initial)}</span>`;
+}
+
+function fileToSquareJpeg(file, size = 128, quality = 0.6) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+let avatarPickerRow = null;
+
+function openAvatarPicker(row) {
+  avatarPickerRow = row;
+  document.getElementById("avatar-picker").classList.remove("hidden");
+}
+
+function closeAvatarPicker() {
+  avatarPickerRow = null;
+  document.getElementById("avatar-picker").classList.add("hidden");
+}
+
+function setRowAvatar(row, avatar) {
+  row.dataset.avatar = avatar || "";
+  const btn = row.querySelector(".player-avatar-btn");
+  const name = row.querySelector(".player-name-input").value;
+  btn.innerHTML = renderAvatar({ name, avatar: avatar || null });
+}
+
+document.getElementById("avatar-picker-gallery").innerHTML = AVATAR_ICONS.map(
+  (icon) => `<button type="button" data-icon="${icon}">${icon}</button>`
+).join("");
+
+document.getElementById("avatar-picker-gallery").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-icon]");
+  if (!btn || !avatarPickerRow) return;
+  setRowAvatar(avatarPickerRow, btn.dataset.icon);
+  closeAvatarPicker();
+});
+
+document.getElementById("avatar-picker-photo").addEventListener("click", () => {
+  document.getElementById("avatar-file-input").click();
+});
+
+document.getElementById("avatar-file-input").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file || !avatarPickerRow) return;
+  const row = avatarPickerRow;
+  try {
+    const dataUrl = await fileToSquareJpeg(file);
+    setRowAvatar(row, dataUrl);
+  } catch (err) {
+    console.error(err);
+  }
+  closeAvatarPicker();
+});
+
+document.getElementById("avatar-picker-remove").addEventListener("click", () => {
+  if (!avatarPickerRow) return;
+  setRowAvatar(avatarPickerRow, null);
+  closeAvatarPicker();
+});
+
+document.getElementById("avatar-picker-cancel").addEventListener("click", closeAvatarPicker);
+
+document.getElementById("avatar-picker").addEventListener("click", (e) => {
+  if (e.target.id === "avatar-picker") closeAvatarPicker();
+});
 
 function fillRuleInputs(rules) {
   document.getElementById("rule-bidZeroSuccess").value = rules.bidZeroSuccess;
@@ -289,8 +394,14 @@ document.getElementById("btn-start-game").addEventListener("click", async () => 
   const errorsEl = document.getElementById("setup-errors");
   errorsEl.textContent = "";
 
-  const nameInputs = [...document.querySelectorAll("#players-list .player-name-input")];
-  const names = nameInputs.map((i) => i.value.trim()).filter((n) => n.length > 0);
+  const rows = [...document.querySelectorAll("#players-list .player-row")];
+  const playerInputs = rows
+    .map((row) => ({
+      name: row.querySelector(".player-name-input").value.trim(),
+      avatar: row.dataset.avatar || null,
+    }))
+    .filter((p) => p.name.length > 0);
+  const names = playerInputs.map((p) => p.name);
 
   if (names.length < 2) {
     errorsEl.textContent = "Il faut au moins 2 joueurs.";
@@ -304,7 +415,7 @@ document.getElementById("btn-start-game").addEventListener("click", async () => 
 
   const numRounds = clamp(parseInt(document.getElementById("input-num-rounds").value, 10), 1, 10);
   const rules = readRuleInputsFromForm();
-  const players = names.map((name) => ({ id: uid(), name }));
+  const players = playerInputs.map(({ name, avatar }) => ({ id: uid(), name, avatar }));
 
   const gameData = {
     status: "in_progress",
@@ -477,6 +588,7 @@ function renderRoundScreen(editIndex = null) {
         <div class="player-round-card">
           <h3>
             <span class="bid-order-badge" title="Ordre d'annonce">${bidPositionByPlayerId[p.id]}</span>
+            ${renderAvatar(p)}
             ${escapeHtml(p.name)}
             ${dealerBadge}
           </h3>
@@ -624,7 +736,7 @@ function buildRankingHtml(game) {
     .map(
       ({ player, total, rank }) => `
       <div class="ranking-item ${rank === 1 ? "rank-1" : ""}">
-        <span><span class="rank-position">#${rank}</span>${escapeHtml(player.name)}</span>
+        <span class="ranking-item-player"><span class="rank-position">#${rank}</span>${renderAvatar(player)}${escapeHtml(player.name)}</span>
         <strong>${total} pts</strong>
       </div>`
     )
@@ -704,7 +816,20 @@ function launchConfetti() {
   }, 4000);
 }
 
+function buildWinnerSpotlightHtml(game) {
+  return getWinners(game)
+    .map(
+      (player) => `
+      <div class="winner-spotlight-item">
+        ${renderAvatar(player, "winner-spotlight-avatar")}
+        <span class="winner-spotlight-name">🏆 ${escapeHtml(player.name)}</span>
+      </div>`
+    )
+    .join("");
+}
+
 function renderFinished() {
+  document.getElementById("winner-spotlight").innerHTML = buildWinnerSpotlightHtml(currentGame);
   document.getElementById("finished-ranking").innerHTML =
     buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";
