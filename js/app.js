@@ -816,7 +816,20 @@ function launchConfetti() {
   }, 4000);
 }
 
+function buildWinnerSpotlightHtml(game) {
+  return getWinners(game)
+    .map(
+      (player) => `
+      <div class="winner-spotlight-item">
+        ${renderAvatar(player, "winner-spotlight-avatar")}
+        <span class="winner-spotlight-name">🏆 ${escapeHtml(player.name)}</span>
+      </div>`
+    )
+    .join("");
+}
+
 function renderFinished() {
+  document.getElementById("winner-spotlight").innerHTML = buildWinnerSpotlightHtml(currentGame);
   document.getElementById("finished-ranking").innerHTML =
     buildRankingHtml(currentGame) + buildScoreboardTable(currentGame, { editable: true });
   document.getElementById("finished-share-status").textContent = "";

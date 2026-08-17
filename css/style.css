@@ -610,6 +610,54 @@ table.scoreboard tr.round-row-editable:active td {
   }
 }
 
+/* Spotlight du/des gagnant(s) (écran de fin de partie) */
+.winner-spotlight {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.winner-spotlight-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.winner-spotlight-avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 3rem;
+  border-width: 3px;
+  box-shadow: 0 0 18px 4px rgba(212, 175, 55, 0.6);
+  animation: winner-zoom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.winner-spotlight-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+}
+
+@keyframes winner-zoom {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winner-spotlight-avatar {
+    animation: none;
+  }
+}
+
 /* Classement final */
 .ranking-item {
   display: flex;
