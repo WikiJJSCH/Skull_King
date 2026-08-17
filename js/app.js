@@ -251,7 +251,7 @@ function escapeHtml(str) {
 
 // ---------- Avatars joueur ----------
 
-const AVATAR_ICONS = ["🏴‍☠️", "💀", "🦜", "⚓", "🗺️", "💰", "⚔️", "🧭"];
+const AVATAR_ICONS = ["⛵", "🧜‍♀️", "🦜", "⚓", "🗺️", "💰", "⚔️", "🧭"];
 
 function renderAvatar(player, extraClass = "") {
   const avatar = player.avatar;
