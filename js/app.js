@@ -37,7 +37,7 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
-// ---------- Sons (synthétisés en Web Audio, pas de fichier à charger) ----------
+// ---------- Sons (le canon est un enregistrement réel, la victoire reste synthétisée) ----------
 
 let audioCtx = null;
 
@@ -49,45 +49,41 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// Amorce le contexte audio dès le premier geste sur la page (Safari/iOS exige
-// que la création/reprise se fasse directement dans un geste utilisateur).
-document.addEventListener("pointerdown", getAudioContext, { once: true });
+let cannonBufferPromise = null;
 
-function playCannonSound() {
+function loadCannonBuffer(ctx) {
+  if (!cannonBufferPromise) {
+    cannonBufferPromise = fetch("sounds/cannon-shot.mp3")
+      .then((res) => res.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data));
+  }
+  return cannonBufferPromise;
+}
+
+// Amorce le contexte audio et précharge le son du canon dès le premier geste
+// sur la page (Safari/iOS exige que la création/reprise se fasse directement
+// dans un geste utilisateur, et ça évite tout délai à la première lecture).
+document.addEventListener(
+  "pointerdown",
+  () => {
+    const ctx = getAudioContext();
+    if (ctx) loadCannonBuffer(ctx);
+  },
+  { once: true }
+);
+
+async function playCannonSound() {
   const ctx = getAudioContext();
   if (!ctx) return;
-  const now = ctx.currentTime;
-
-  // Crépitement initial (bruit large bande, très bref)
-  const crackDuration = 0.08;
-  const crackBuffer = ctx.createBuffer(1, ctx.sampleRate * crackDuration, ctx.sampleRate);
-  const crackData = crackBuffer.getChannelData(0);
-  for (let i = 0; i < crackData.length; i++) {
-    crackData[i] = (Math.random() * 2 - 1) * (1 - i / crackData.length);
+  try {
+    const buffer = await loadCannonBuffer(ctx);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start();
+  } catch (err) {
+    console.error(err);
   }
-  const crack = ctx.createBufferSource();
-  crack.buffer = crackBuffer;
-  const crackFilter = ctx.createBiquadFilter();
-  crackFilter.type = "lowpass";
-  crackFilter.frequency.value = 1500;
-  const crackGain = ctx.createGain();
-  crackGain.gain.setValueAtTime(0.4, now);
-  crackGain.gain.exponentialRampToValueAtTime(0.001, now + crackDuration);
-  crack.connect(crackFilter).connect(crackGain).connect(ctx.destination);
-  crack.start(now);
-
-  // Coup grave qui porte le "boum" (fréquence descendante)
-  const thumpDuration = 0.5;
-  const thump = ctx.createOscillator();
-  thump.type = "sine";
-  thump.frequency.setValueAtTime(150, now);
-  thump.frequency.exponentialRampToValueAtTime(45, now + 0.2);
-  const thumpGain = ctx.createGain();
-  thumpGain.gain.setValueAtTime(0.5, now);
-  thumpGain.gain.exponentialRampToValueAtTime(0.001, now + thumpDuration);
-  thump.connect(thumpGain).connect(ctx.destination);
-  thump.start(now);
-  thump.stop(now + thumpDuration);
 }
 
 function playVictorySound() {
