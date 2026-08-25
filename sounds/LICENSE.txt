@@ -1,0 +1,8 @@
+cannon-shot.mp3
+----------------
+Titre   : Cannon Shot
+Auteur  : Universfield
+Source  : https://pixabay.com/sound-effects/search/cannon%20shot/
+Licence : Pixabay Content License (https://pixabay.com/service/license-summary/)
+          Utilisation libre, y compris commerciale, sans attribution obligatoire,
+          tant que le contenu n'est pas redistribué seul en tant que produit autonome.
